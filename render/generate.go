@@ -1,4 +1,3 @@
 package render
 
-//go:generate statik -src=templates
-
+//go:generate statik -src=../resources

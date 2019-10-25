@@ -1,0 +1,64 @@
+package {{ .Package }}
+
+import (
+  "{{ .Module }}/protocol"
+  "{{ .Module }}/protocol/sizeof"
+)
+
+type {{ .Message.Name }} struct {
+{{- range .Message.Fields | forVersion $.Version }}
+  {{ .Name }} {{ .Type }} {{ if .About }}// {{ .About }}{{ end }}
+{{- end }}
+}
+
+func (t {{ .Message.Name }}) Size() int32 {
+  var sz int32
+{{- range $i, $f := .Message.Fields | forVersion $.Version }}
+{{- if .Type | isArray }}
+  sz += sizeof.Array(len(t.{{ $f.Name }}), func(i int) int32 { return t.{{ $f.Name }}[i].Size() })
+{{- end }}
+{{- if .Type | isArray | not }}
+  sz += sizeof.{{ .Type | capitalize }}(t.{{ $f.Name}})
+{{- end }}
+{{- end }}
+  return sz
+}
+
+func (t {{ .Message.Name }}) Marshal(encoder *protocol.Encoder) {
+{{- range $i, $f := .Message.Fields | forVersion $.Version }}
+{{- if .Type | isArray }}
+  encoder.PutArray(len(t.{{ $f.Name }}), func(i int) { t.{{ $f.Name }}[i].Marshal(encoder) })
+{{- end }}
+{{- if .Type | isArray | not }}
+  encoder.Put{{ .Type | capitalize }}(t.{{ $f.Name}})
+{{- end }}
+{{- end }}
+}
+
+func (t *{{ .Message.Name }}) Unmarshal(decoder *protocol.Decoder) error {
+{{- range $i, $f := .Message.Fields | forVersion $.Version }}
+{{- if .Type | isArray }}
+  fn{{ $i }} := func(decoder *protocol.Decoder, n int) error {
+    items := make({{ .Type }}, 0, n)
+    for i := 0; i < n; i++ {
+      var item {{ .Type | type }}
+      if err := (&item).Unmarshal(decoder); err != nil {
+        return err
+      }
+      items = append(items, item)
+    }
+    t.{{ $f.Name }} = items
+    return nil
+  }
+  if err := decoder.Array(fn{{ $i }}); err != nil {
+    return err
+  }
+{{- end }}
+{{- if .Type | isArray | not }}
+  if err := decoder.{{ .Type | capitalize }}(&t.{{ $f.Name}}); err != nil {
+    return err
+  }
+{{- end }}
+{{- end }}
+  return nil
+}
