@@ -5,10 +5,26 @@ import (
 	"io"
 )
 
+type flusher interface {
+	Flush() error
+}
+
 type Encoder struct {
 	buf    [8]byte
 	target io.Writer
 	err    error
+}
+
+func (e *Encoder) Flush() error {
+	if e.err != nil {
+		return e.err
+	}
+
+	if f, ok := e.target.(flusher); ok {
+		return f.Flush()
+	}
+
+	return nil
 }
 
 func (e *Encoder) PutArray(n int, fn func(int)) {
@@ -32,11 +48,6 @@ func (e *Encoder) PutBool(b bool) {
 
 func (e *Encoder) PutBytes(data []byte) {
 	if e.err != nil {
-		return
-	}
-
-	if data == nil {
-		e.PutInt32(-1)
 		return
 	}
 
@@ -76,6 +87,11 @@ func (e *Encoder) PutInt32Array(ii []int32) {
 		return
 	}
 
+	if ii == nil {
+		e.PutInt32(-1)
+		return
+	}
+
 	e.PutArray(len(ii), func(i int) { e.PutInt32(ii[i]) })
 }
 
@@ -86,6 +102,23 @@ func (e *Encoder) PutInt64(i int64) {
 
 	binary.BigEndian.PutUint64(e.buf[:8], uint64(i))
 	_, e.err = e.target.Write(e.buf[:8])
+}
+
+func (e *Encoder) PutInt64Array(ii []int64) {
+	if e.err != nil {
+		return
+	}
+
+	if ii == nil {
+		e.PutInt32(-1)
+		return
+	}
+
+	e.PutArray(len(ii), func(i int) { e.PutInt64(ii[i]) })
+}
+
+func (e *Encoder) PutNullableString(s *string) {
+
 }
 
 func (e *Encoder) PutString(s string) {
@@ -102,5 +135,14 @@ func (e *Encoder) PutStringArray(ss []string) {
 		return
 	}
 
+	if ss == nil {
+		e.PutInt32(-1)
+		return
+	}
+
 	e.PutArray(len(ss), func(i int) { e.PutString(ss[i]) })
 }
+
+func (e *Encoder) PutVarInt64(i int64) {}
+
+func (e *Encoder) PutVarString(s string) {}
