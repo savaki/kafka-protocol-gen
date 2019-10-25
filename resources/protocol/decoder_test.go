@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"bytes"
+	"math"
 	"reflect"
 	"testing"
 )
@@ -455,6 +456,54 @@ func TestDecoder_PutStringArray(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDecoder_PutVarInt(t *testing.T) {
+	testCases := map[string]struct {
+		want int64
+	}{
+		"0": {
+			want: 0,
+		},
+		"1": {
+			want: 1,
+		},
+		"-1": {
+			want: 1,
+		},
+		"-int64": {
+			want: math.MinInt64,
+		},
+		"int64": {
+			want: math.MaxInt64,
+		},
+	}
+
+	for label, tc := range testCases {
+		t.Run(label, func(t *testing.T) {
+			var (
+				buf = bytes.NewBuffer(nil)
+				got int64
+			)
+
+			encoder := &Encoder{target: buf}
+			encoder.PutVarInt(tc.want)
+			err := encoder.Flush()
+			if err != nil {
+				t.Fatalf("got %v; want nil", err)
+			}
+
+			decoder := &Decoder{raw: buf.Bytes()}
+			err = decoder.VarInt(&got)
+			if err != nil {
+				t.Fatalf("got %v; want nil", err)
+			}
+
+			if got != tc.want {
 				t.Fatalf("got %v; want %v", got, tc.want)
 			}
 		})

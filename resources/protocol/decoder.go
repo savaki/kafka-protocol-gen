@@ -8,6 +8,7 @@ import (
 var (
 	errInsufficientData = errors.New("insufficient data to decode packet")
 	errNullString       = errors.New("null string")
+	errVarIntOverflow   = errors.New("var int overflow")
 )
 
 func IsInsufficientDataError(err error) bool {
@@ -183,4 +184,22 @@ func (d *Decoder) StringArray(ss *[]string) error {
 		return nil
 	}
 	return d.Array(fn)
+}
+
+func (d *Decoder) VarInt(v *int64) error {
+	tmp, n := binary.Varint(d.raw[d.offset:])
+	switch n {
+	case 0:
+		d.offset = len(d.raw) // no further requests can be made
+		return errInsufficientData
+
+	case -1:
+		d.offset = len(d.raw) // no further requests can be made
+		return errVarIntOverflow
+
+	default:
+		d.offset += n
+		*v = tmp
+		return nil
+	}
 }

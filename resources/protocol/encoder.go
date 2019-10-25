@@ -10,7 +10,7 @@ type flusher interface {
 }
 
 type Encoder struct {
-	buf    [8]byte
+	buf    [16]byte
 	target io.Writer
 	err    error
 }
@@ -147,6 +147,11 @@ func (e *Encoder) PutStringArray(ss []string) {
 	e.PutArray(len(ss), func(i int) { e.PutString(ss[i]) })
 }
 
-func (e *Encoder) PutVarInt64(i int64) {}
+func (e *Encoder) PutVarInt(i int64) {
+	if e.err != nil {
+		return
+	}
 
-func (e *Encoder) PutVarString(s string) {}
+	length := binary.PutVarint(e.buf[:], i)
+	_, e.err = e.target.Write(e.buf[0:length])
+}

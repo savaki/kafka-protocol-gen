@@ -51,6 +51,8 @@ func TestEncoder_err(t *testing.T) {
 	var ss []string
 	encoder.PutStringArray(ss)
 
+	encoder.PutVarInt(123)
+
 	if got, want := buf.Len(), 0; got != want {
 		t.Fatalf("got %v; want %v", got, want)
 	}
