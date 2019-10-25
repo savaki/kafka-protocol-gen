@@ -118,7 +118,11 @@ func (e *Encoder) PutInt64Array(ii []int64) {
 }
 
 func (e *Encoder) PutNullableString(s *string) {
-
+	if s == nil {
+		e.PutInt16(-1)
+		return
+	}
+	e.PutString(*s)
 }
 
 func (e *Encoder) PutString(s string) {

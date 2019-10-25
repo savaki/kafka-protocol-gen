@@ -208,6 +208,9 @@ func TestDecoder_PutInt32Array(t *testing.T) {
 	testCases := map[string]struct {
 		want []int32
 	}{
+		"nil": {
+			want: nil,
+		},
 		"pos": {
 			want: []int32{1, 2, 3},
 		},
@@ -286,6 +289,9 @@ func TestDecoder_PutInt64Array(t *testing.T) {
 	testCases := map[string]struct {
 		want []int64
 	}{
+		"nil": {
+			want: nil,
+		},
 		"pos": {
 			want: []int64{1, 2, 3},
 		},
@@ -355,6 +361,59 @@ func TestDecoder_PutString(t *testing.T) {
 
 			if got != tc.want {
 				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDecoder_PutNullableString(t *testing.T) {
+	var (
+		blank = ""
+		some  = "some"
+	)
+
+	testCases := map[string]struct {
+		want *string
+	}{
+		"blank": {
+			want: &blank,
+		},
+		"nil": {
+			want: nil,
+		},
+		"some": {
+			want: &some,
+		},
+	}
+
+	for label, tc := range testCases {
+		t.Run(label, func(t *testing.T) {
+			var (
+				buf = bytes.NewBuffer(nil)
+				got *string
+			)
+
+			encoder := &Encoder{target: buf}
+			encoder.PutNullableString(tc.want)
+			err := encoder.Flush()
+			if err != nil {
+				t.Fatalf("got %v; want nil", err)
+			}
+
+			decoder := &Decoder{raw: buf.Bytes()}
+			err = decoder.NullableString(&got)
+			if err != nil {
+				t.Fatalf("got %v; want nil", err)
+			}
+
+			if got == nil && tc.want != nil {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+			if got != nil && tc.want == nil {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+			if got != nil && tc.want != nil && *got != *tc.want {
+				t.Fatalf("got %v; want %v", *got, *tc.want)
 			}
 		})
 	}
@@ -452,6 +511,12 @@ func TestDecoder_remain(t *testing.T) {
 
 	var ii64 []int64
 	err = decoder.Int64Array(&ii64)
+	if !IsInsufficientDataError(err) {
+		t.Fatalf("got %v; want %v", err, errInsufficientData)
+	}
+
+	var sp *string
+	err = decoder.NullableString(&sp)
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}

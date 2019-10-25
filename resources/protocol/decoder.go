@@ -5,7 +5,10 @@ import (
 	"errors"
 )
 
-var errInsufficientData = errors.New("insufficient data to decode packet")
+var (
+	errInsufficientData = errors.New("insufficient data to decode packet")
+	errNullString       = errors.New("null string")
+)
 
 func IsInsufficientDataError(err error) bool {
 	return errors.Is(err, errInsufficientData)
@@ -132,10 +135,28 @@ func (d *Decoder) Int64Array(vv *[]int64) error {
 	return d.Array(fn)
 }
 
+func (d *Decoder) NullableString(s **string) error {
+	var v string
+	if err := d.String(&v); err != nil {
+		if err == errNullString {
+			return nil
+		}
+		return err
+	}
+
+	*s = &v
+
+	return nil
+}
+
 func (d *Decoder) String(s *string) error {
 	var n int16
 	if err := d.Int16(&n); err != nil {
 		return err
+	}
+
+	if n == -1 {
+		return errNullString
 	}
 
 	length := int(n)
