@@ -34,7 +34,7 @@ func TestDecoder_PutBool(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Bool(&got)
+			got, err = decoder.Bool()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -76,7 +76,7 @@ func TestDecoder_PutBytes(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Bytes(&got)
+			got, err = decoder.Bytes()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -115,7 +115,7 @@ func TestDecoder_PutInt8(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Int8(&got)
+			got, err = decoder.Int8()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -154,7 +154,7 @@ func TestDecoder_PutInt16(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Int16(&got)
+			got, err = decoder.Int16()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -193,7 +193,7 @@ func TestDecoder_PutInt32(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Int32(&got)
+			got, err = decoder.Int32()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -235,7 +235,7 @@ func TestDecoder_PutInt32Array(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Int32Array(&got)
+			got, err = decoder.Int32Array()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -274,7 +274,7 @@ func TestDecoder_PutInt64(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Int64(&got)
+			got, err = decoder.Int64()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -316,7 +316,7 @@ func TestDecoder_PutInt64Array(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.Int64Array(&got)
+			got, err = decoder.Int64Array()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -355,7 +355,7 @@ func TestDecoder_PutString(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.String(&got)
+			got, err = decoder.String()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -402,7 +402,7 @@ func TestDecoder_PutNullableString(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.NullableString(&got)
+			got, err = decoder.NullableString()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -450,7 +450,7 @@ func TestDecoder_PutStringArray(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.StringArray(&got)
+			got, err = decoder.StringArray()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}
@@ -516,68 +516,57 @@ func TestDecoder_remain(t *testing.T) {
 		err     error
 	)
 
-	var b bool
-	err = decoder.Bool(&b)
+	_, err = decoder.Bool()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var data []byte
-	err = decoder.Bytes(&data)
+	_, err = decoder.Bytes()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var i8 int8
-	err = decoder.Int8(&i8)
+	_, err = decoder.Int8()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var i16 int16
-	err = decoder.Int16(&i16)
+	_, err = decoder.Int16()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var i32 int32
-	err = decoder.Int32(&i32)
+	_, err = decoder.Int32()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var ii32 []int32
-	err = decoder.Int32Array(&ii32)
+	_, err = decoder.Int32Array()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var i64 int64
-	err = decoder.Int64(&i64)
+	_, err = decoder.Int64()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var ii64 []int64
-	err = decoder.Int64Array(&ii64)
+	_, err = decoder.Int64Array()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var sp *string
-	err = decoder.NullableString(&sp)
+	_, err = decoder.NullableString()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var s string
-	err = decoder.String(&s)
+	_, err = decoder.String()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
 
-	var ss []string
-	err = decoder.StringArray(&ss)
+	_, err = decoder.StringArray()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, errInsufficientData)
 	}
