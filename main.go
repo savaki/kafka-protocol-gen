@@ -249,6 +249,7 @@ var funcMap = template.FuncMap{
 	},
 	"isArray":          isArray,
 	"isPrimitiveArray": isPrimitiveArray,
+	"isString":         isString,
 	"isStructArray":    isStructArray,
 	"structName": func(a string) string {
 		return strings.ReplaceAll(a, "[]", "")
@@ -288,6 +289,10 @@ func isArray(t string) bool {
 
 func isPrimitiveArray(t string) bool {
 	return t == "[]string" || t == "[]int32" || t == "[]int64"
+}
+
+func isString(t string) bool {
+	return t == "string"
 }
 
 func isStructArray(t string) bool {
