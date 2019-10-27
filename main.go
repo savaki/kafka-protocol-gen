@@ -229,8 +229,9 @@ func action(_ *cli.Context) error {
 }
 
 type VersionFields struct {
-	Version int
 	Fields  []protocol.Field
+	Name    string
+	Version int
 }
 
 var funcMap = template.FuncMap{
@@ -251,10 +252,22 @@ var funcMap = template.FuncMap{
 	"structName": func(a string) string {
 		return strings.ReplaceAll(a, "[]", "")
 	},
-	"toVersionFields": func(version int, fields []protocol.Field) VersionFields {
-		return VersionFields{
-			Version: version,
-			Fields:  fields,
+	"toVersionFields": func(version int, v interface{}) VersionFields {
+		switch t := v.(type) {
+		case protocol.Message:
+			return VersionFields{
+				Fields:  t.Fields,
+				Name:    t.Name,
+				Version: version,
+			}
+		case protocol.Field:
+			return VersionFields{
+				Fields:  t.Fields,
+				Name:    t.Name,
+				Version: version,
+			}
+		default:
+			return VersionFields{}
 		}
 	},
 	"type": func(v string) string { return strings.ReplaceAll(v, "[]", "") },
