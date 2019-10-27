@@ -13,9 +13,9 @@ func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder) error {
   if n, err := decoder.ArrayLength(); err != nil {
     return err
   } else if n >= 0 {
-    t.{{ $f.Name }} = make({{ $f.Type }}, n)
+    t.{{ $f.Name }} = make({{ $f.Type }}{{ $.ApiKey}}, n)
     for i := 0; i < n; i++ {
-      var item {{ $f.Type | baseType }}
+      var item {{ $f.Type | baseType }}{{ $.ApiKey}}
       if err := (&item).Unmarshal(decoder); err != nil {
         return err
       }

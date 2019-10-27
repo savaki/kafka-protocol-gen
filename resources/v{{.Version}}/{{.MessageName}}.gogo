@@ -9,7 +9,12 @@ import (
 
 type {{ .Message.Name }} struct {
 {{- range .Message.Fields | forVersion $.Version }}
+{{- if .Type | isStructArray }}
+  {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} {{ if .About }}// {{ .About }}{{ end }}
+{{- end }}
+{{- if .Type | isStructArray | not }}
   {{ .Name }} {{ .Type | goType }} {{ if .About }}// {{ .About }}{{ end }}
+{{- end }}
 {{- end }}
 }
 
@@ -17,11 +22,16 @@ type {{ .Message.Name }} struct {
 {{ template "_marshal.gogo" (toVersionFields $.Version .Message) }}
 {{ template "_unmarshal.gogo" (toVersionFields $.Version .Message) }}
 
-{{- range (findStructFields .Version .Message.Fields) }}
+{{- range (findStructs .Message.ApiKey .Version .Message) }}
 
 type {{ .Name }} struct {
 {{- range .Fields | forVersion .Version }}
+{{- if .Type | isStructArray }}
+  {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} {{ if .About }}// {{ .About }}{{ end }}
+{{- end }}
+{{- if .Type | isStructArray | not }}
   {{ .Name }} {{ .Type | goType }} {{ if .About }}// {{ .About }}{{ end }}
+{{- end }}
 {{- end }}
 }
 

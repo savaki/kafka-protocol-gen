@@ -25,12 +25,13 @@ type Field struct {
 // Message definition for kafka protocol as defined here,
 // https://github.com/apache/kafka/tree/trunk/clients/src/main/resources/common/message
 type Message struct {
-	ApiKey           int           `json:"apiKey"`           // ApiKey
-	Type             string        `json:"type"`             // Type of message; request or response
-	Name             string        `json:"name"`             // Name of message
-	ValidVersions    ValidVersions `json:"validVersions"`    // ValidVersions contains set of valid message Versions
-	FlexibleVersions string        `json:"flexibleVersions"` // FlexibleVersions ... todo figure out what this means
-	Fields           []Field       `json:"fields,omitempty"` // Fields contained within Message
+	ApiKey           int           `json:"apiKey"`                  // ApiKey
+	Type             string        `json:"type"`                    // Type of message; request or response
+	Name             string        `json:"name"`                    // Name of message
+	ValidVersions    ValidVersions `json:"validVersions"`           // ValidVersions contains set of valid message Versions
+	FlexibleVersions string        `json:"flexibleVersions"`        // FlexibleVersions ... todo figure out what this means
+	Fields           []Field       `json:"fields,omitempty"`        // Fields contained within Message
+	CommonStructs    []Field       `json:"commonStructs,omitempty"` // CommonStructs used by the message
 }
 
 // ValidVersions parses the valid versions string into its semantic values

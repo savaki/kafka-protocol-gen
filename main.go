@@ -229,6 +229,7 @@ func action(_ *cli.Context) error {
 }
 
 type VersionFields struct {
+	ApiKey  int
 	Fields  []protocol.Field
 	Name    string
 	Version int
@@ -237,6 +238,7 @@ type VersionFields struct {
 var funcMap = template.FuncMap{
 	"baseType":         baseType,
 	"capitalize":       capitalize,
+	"findStructs":      findStructs,
 	"findStructFields": findStructFields,
 	"forVersion": func(version int, fields []protocol.Field) []protocol.Field {
 		var valid []protocol.Field
@@ -250,28 +252,19 @@ var funcMap = template.FuncMap{
 	},
 	"goType":           goType,
 	"isArray":          isArray,
+	"isBytes":          isBytes,
 	"isPrimitiveArray": isPrimitiveArray,
 	"isString":         isString,
 	"isStructArray":    isStructArray,
 	"structName": func(a string) string {
 		return strings.ReplaceAll(a, "[]", "")
 	},
-	"toVersionFields": func(version int, v interface{}) VersionFields {
-		switch t := v.(type) {
-		case protocol.Message:
-			return VersionFields{
-				Fields:  t.Fields,
-				Name:    t.Name,
-				Version: version,
-			}
-		case protocol.Field:
-			return VersionFields{
-				Fields:  t.Fields,
-				Name:    t.Name,
-				Version: version,
-			}
-		default:
-			return VersionFields{}
+	"toVersionFields": func(version int, message protocol.Message) VersionFields {
+		return VersionFields{
+			ApiKey:  message.ApiKey,
+			Fields:  message.Fields,
+			Name:    message.Name,
+			Version: version,
 		}
 	},
 	"type": func(v string) string { return strings.ReplaceAll(v, "[]", "") },
@@ -300,6 +293,10 @@ func goType(t string) string {
 
 func isArray(t string) bool {
 	return strings.Contains(t, "[]")
+}
+
+func isBytes(t string) bool {
+	return t == "bytes"
 }
 
 func isPrimitiveArray(t string) bool {
@@ -378,7 +375,7 @@ func interpolate(path string, message protocol.Message, version int) (string, er
 	return buf.String(), nil
 }
 
-func findStructFields(version int, fields []protocol.Field) []VersionFields {
+func findStructFields(apiKey, version int, fields []protocol.Field) []VersionFields {
 	var structFields []VersionFields
 	for _, f := range fields {
 		if len(f.Fields) == 0 {
@@ -389,12 +386,27 @@ func findStructFields(version int, fields []protocol.Field) []VersionFields {
 		}
 
 		item := VersionFields{
+			ApiKey:  apiKey,
 			Fields:  f.Fields,
-			Name:    baseType(f.Type),
+			Name:    baseType(f.Type) + strconv.Itoa(apiKey),
 			Version: version,
 		}
 		structFields = append(structFields, item)
-		structFields = append(structFields, findStructFields(version, f.Fields)...)
+		structFields = append(structFields, findStructFields(apiKey, version, f.Fields)...)
+	}
+	return structFields
+}
+
+func findStructs(apiKey, version int, message protocol.Message) []VersionFields {
+	structFields := findStructFields(apiKey, version, message.Fields)
+	for _, f := range message.CommonStructs {
+		item := VersionFields{
+			ApiKey:  apiKey,
+			Fields:  f.Fields,
+			Name:    f.Name + strconv.Itoa(apiKey),
+			Version: version,
+		}
+		structFields = append(structFields, item)
 	}
 	return structFields
 }

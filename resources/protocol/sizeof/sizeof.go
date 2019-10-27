@@ -21,7 +21,7 @@ func Int32Array(ii []int32) int32 {
 	return ArrayLength + int32(len(ii))*Int32 // int32 length + length of array * int32 length
 }
 
-func Int64Array(ii []int32) int32 {
+func Int64Array(ii []int64) int32 {
 	return ArrayLength + int32(len(ii))*Int64 // int32 length + length of array * int64 length
 }
 

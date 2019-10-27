@@ -1,24 +1,24 @@
 func (t {{ .Name }}) Size() int32 {
   var sz int32
 {{- range $i, $f := .Fields | forVersion .Version }}
-
-  // {{ $f.Name }}
 {{- if .Type | isPrimitiveArray }}
-  sz += sizeof.{{ $f.Type | baseType | capitalize }}Array(t.{{ $f.Name }})
+  sz += sizeof.{{ $f.Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
 {{- if .Type | isStructArray }}
-  sz += sizeof.ArrayLength
+  sz += sizeof.ArrayLength // {{ $f.Name }}
   for i := len(t.{{ $f.Name }}) - 1 ; i >= 0 ; i-- {
     sz += t.{{ $f.Name }}[i].Size()
   }
 {{- end }}
+{{- if .Type | isBytes }}
+  sz += sizeof.Bytes(t.{{ $f.Name }}) // {{ $f.Name }}
+{{- end }}
 {{- if .Type | isString }}
-  sz += sizeof.String(t.{{ $f.Name }})
+  sz += sizeof.String(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
-{{- if and (.Type | isArray | not) (.Type | isString | not) }}
-  sz += sizeof.{{ .Type | capitalize }}
+{{- if and (.Type | isArray | not) (.Type | isString | not) (.Type | isBytes | not) }}
+  sz += sizeof.{{ .Type | capitalize }} // {{ $f.Name }}
 {{- end }}
 {{- end }}
-
   return sz
 }
