@@ -27,6 +27,14 @@ func (d *Decoder) remains(n int) error {
 	return nil
 }
 
+func (d *Decoder) ArrayLength() (int, error) {
+	n, err := d.Int32()
+	if err != nil {
+		return 0, err
+	}
+	return int(n), nil
+}
+
 func (d *Decoder) Bool() (bool, error) {
 	if err := d.remains(1); err != nil {
 		return false, err
@@ -79,7 +87,7 @@ func (d *Decoder) Int32() (int32, error) {
 }
 
 func (d *Decoder) Int32Array() ([]int32, error) {
-	n, err := d.Int32()
+	n, err := d.ArrayLength()
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +97,7 @@ func (d *Decoder) Int32Array() ([]int32, error) {
 	}
 
 	items := make([]int32, n)
-	for i := int32(0); i < n; i++ {
+	for i := 0; i < n; i++ {
 		item, err := d.Int32()
 		if err != nil {
 			return nil, err
@@ -110,7 +118,7 @@ func (d *Decoder) Int64() (int64, error) {
 }
 
 func (d *Decoder) Int64Array() ([]int64, error) {
-	n, err := d.Int32()
+	n, err := d.ArrayLength()
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +128,7 @@ func (d *Decoder) Int64Array() ([]int64, error) {
 	}
 
 	items := make([]int64, n)
-	for i := int32(0); i < n; i++ {
+	for i := 0; i < n; i++ {
 		item, err := d.Int64()
 		if err != nil {
 			return nil, err
@@ -164,7 +172,7 @@ func (d *Decoder) String() (string, error) {
 }
 
 func (d *Decoder) StringArray() ([]string, error) {
-	n, err := d.Int32()
+	n, err := d.ArrayLength()
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +182,7 @@ func (d *Decoder) StringArray() ([]string, error) {
 	}
 
 	items := make([]string, n)
-	for i := int32(0); i < n; i++ {
+	for i := 0; i < n; i++ {
 		item, err := d.String()
 		if err != nil {
 			return nil, err

@@ -2,7 +2,9 @@ package {{ .Package }}
 
 import (
   "{{ .Module }}/protocol"
+{{- if gt (.Message.Fields | forVersion $.Version | len) 0 }}
   "{{ .Module }}/protocol/sizeof"
+{{- end }}
 )
 
 type {{ .Message.Name }} struct {
@@ -36,29 +38,5 @@ func (t {{ .Message.Name }}) Marshal(encoder *protocol.Encoder) {
 }
 
 func (t *{{ .Message.Name }}) Unmarshal(decoder *protocol.Decoder) error {
-{{- range $i, $f := .Message.Fields | forVersion $.Version }}
-{{- if .Type | isArray }}
-  fn{{ $i }} := func(decoder *protocol.Decoder, n int) error {
-    items := make({{ .Type }}, 0, n)
-    for i := 0; i < n; i++ {
-      var item {{ .Type | type }}
-      if err := (&item).Unmarshal(decoder); err != nil {
-        return err
-      }
-      items = append(items, item)
-    }
-    t.{{ $f.Name }} = items
-    return nil
-  }
-  if err := decoder.Array(fn{{ $i }}); err != nil {
-    return err
-  }
-{{- end }}
-{{- if .Type | isArray | not }}
-  if err := decoder.{{ .Type | capitalize }}(&t.{{ $f.Name}}); err != nil {
-    return err
-  }
-{{- end }}
-{{- end }}
-  return nil
+{{ template "_marshal.gogo" (toVersionFields $.Version .Message.Fields) }}
 }

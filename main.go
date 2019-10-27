@@ -63,10 +63,32 @@ func main() {
 }
 
 func action(_ *cli.Context) error {
-	//fileSystem, err := fs.New()
-	//if err != nil {
-	//	return fmt.Errorf("unable to load static assets: %w", err)
-	//}
+	dir, err := writeTemplates()
+	if err != nil {
+		return err
+	}
+	if opts.templates == "" {
+		defer os.RemoveAll(dir)
+	}
+
+	var filenames []string
+	fn := func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			filenames = append(filenames, path)
+		}
+		return nil
+	}
+	if err := filepath.Walk(dir, fn); err != nil {
+		return fmt.Errorf("unable to read directory: %w", err)
+	}
+
+	all, err := template.New("templates").Funcs(funcMap).ParseFiles(filenames...)
+	if err != nil {
+		return fmt.Errorf("unable to load templates: %w", err)
+	}
+	all = all.Funcs(funcMap)
+
+	fmt.Println(all.DefinedTemplates())
 
 	var messages []protocol.Message
 	callback := func(path string, info os.FileInfo, err error) error {
@@ -96,7 +118,6 @@ func action(_ *cli.Context) error {
 		return err
 	}
 
-	var openFunc func(string) (io.ReadCloser, error)
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -104,21 +125,13 @@ func action(_ *cli.Context) error {
 		if info.IsDir() {
 			return nil
 		}
-
-		in, err := openFunc(path)
-		if err != nil {
-			return err
-		}
-		defer in.Close()
-
-		data, err := ioutil.ReadAll(in)
-		if err != nil {
-			return err
+		if strings.HasPrefix(filepath.Base(path), "_") {
+			return nil
 		}
 
-		t, err := template.New("code").Funcs(funcMap).Parse(string(data))
-		if err != nil {
-			return err
+		t := all.Lookup(filepath.Base(path))
+		if t == nil {
+			return fmt.Errorf("unable to lookup template, %v: %w", filepath.Base(path), err)
 		}
 
 		switch {
@@ -212,18 +225,12 @@ func action(_ *cli.Context) error {
 		return nil
 	}
 
-	if opts.templates != "" {
-		openFunc = func(path string) (io.ReadCloser, error) { return os.Open(path) }
-		return filepath.Walk(opts.templates, walkFunc)
-	}
+	return filepath.Walk(dir, walkFunc)
+}
 
-	hfs, err := fs.New()
-	if err != nil {
-		return fmt.Errorf("unable to load static assets: %w", err)
-	}
-
-	openFunc = func(path string) (io.ReadCloser, error) { return hfs.Open(path) }
-	return fs.Walk(hfs, "/", walkFunc)
+type VersionFields struct {
+	Version int
+	Fields  []protocol.Field
 }
 
 var funcMap = template.FuncMap{
@@ -238,9 +245,17 @@ var funcMap = template.FuncMap{
 		}
 		return valid
 	},
-	"isArray": isArray,
+	"isArray":          isArray,
+	"isPrimitiveArray": isPrimitiveArray,
+	"isStructArray":    isStructArray,
 	"structName": func(a string) string {
 		return strings.ReplaceAll(a, "[]", "")
+	},
+	"toVersionFields": func(version int, fields []protocol.Field) VersionFields {
+		return VersionFields{
+			Version: version,
+			Fields:  fields,
+		}
 	},
 	"type": func(v string) string { return strings.ReplaceAll(v, "[]", "") },
 }
@@ -255,6 +270,14 @@ func capitalize(v string) string {
 
 func isArray(t string) bool {
 	return strings.Contains(t, "[]")
+}
+
+func isPrimitiveArray(t string) bool {
+	return t == "[]string" || t == "[]int32" || t == "[]int64"
+}
+
+func isStructArray(t string) bool {
+	return !isPrimitiveArray(t)
 }
 
 var re = regexp.MustCompile(`^[^A-Za-z0-9]*([A-Z0-9]*)([a-z0-9]*)`)
@@ -333,4 +356,54 @@ func findStructFields(fields []protocol.Field) []protocol.Field {
 		structFields = append(structFields, findStructFields(field.Fields)...)
 	}
 	return structFields
+}
+
+func writeTemplates() (string, error) {
+	if opts.templates != "" {
+		return opts.templates, nil
+	}
+
+	dir, err := ioutil.TempDir(os.TempDir(), "templates-")
+	if err != nil {
+		return "", fmt.Errorf("unable to create temporary directory: %w", err)
+	}
+
+	hfs, err := fs.New()
+	if err != nil {
+		return "", fmt.Errorf("unable to load static assets: %w", err)
+	}
+
+	callback := func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
+		filename := filepath.Join(dir, path)
+		if err := os.MkdirAll(filepath.Base(filename), 0755); err != nil {
+			return fmt.Errorf("unable to write directoy, %v: %w", filepath.Base(path), err)
+		}
+
+		out, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return fmt.Errorf("unable to create file, %v: %w", filename, err)
+		}
+		defer out.Close()
+
+		in, err := hfs.Open(path)
+		if err != nil {
+			return fmt.Errorf("unable to open template, %v: %w", path, err)
+		}
+		defer in.Close()
+
+		if _, err := io.Copy(out, in); err != nil {
+			return fmt.Errorf("unable to copy content: %w", err)
+		}
+
+		return nil
+	}
+	if err := fs.Walk(hfs, "/", callback); err != nil {
+		return "", err
+	}
+
+	return dir, nil
 }
