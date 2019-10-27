@@ -1,6 +1,6 @@
 func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder, version int) error {
   var err error
-{{- range $i, $f := .Fields | forVersion .Version }}
+{{- range $i, $f := .Fields | forVersion .Versions }}
 
 {{- if .Type | isPrimitiveArray }}
   t.{{ $f.Name }}, err = decoder.{{ $f.Type | baseType | capitalize }}Array()

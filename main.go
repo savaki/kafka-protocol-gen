@@ -26,6 +26,7 @@ var opts struct {
 	module    string
 	src       string // src dir of protocol json files
 	templates string // templates contains optional directory of templates
+	last      int    // only include the last N versions; 0 means include all versions
 }
 
 func main() {
@@ -36,6 +37,11 @@ func main() {
 			Value:       ".",
 			Usage:       "output directory",
 			Destination: &opts.dir,
+		},
+		cli.IntFlag{
+			Name:        "last",
+			Usage:       "last N versions",
+			Destination: &opts.last,
 		},
 		cli.StringFlag{
 			Name:        "module",
@@ -138,49 +144,54 @@ func action(_ *cli.Context) error {
 		switch {
 		case strings.Contains(path, "{{.MessageName}}"):
 			for _, message := range messages {
-				for version := message.ValidVersions.From; version <= message.ValidVersions.To; version++ {
-					fn := func() error {
-						rel := path
-						if strings.HasPrefix(rel, opts.templates) {
-							rel = rel[len(opts.templates):]
-						}
-						filename, err := interpolate(filepath.Join(opts.dir, rel), message, version)
-						if err != nil {
-							return err
-						}
-
-						if ext := filepath.Ext(filename); strings.HasPrefix(ext, suffix) && len(ext) > len(suffix) {
-							filename = filename[0:len(filename)-len(ext)] + "." + ext[len(suffix):]
-						}
-
-						if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
-							return err
-						}
-
-						f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-						if err != nil {
-							return err
-						}
-						defer f.Close()
-
-						data := map[string]interface{}{
-							"Module":  opts.module,
-							"Package": "v" + strconv.Itoa(version),
-							"Message": message,
-							"Version": version,
-						}
-
-						if err := t.Execute(f, data); err != nil {
-							return err
-						}
-						fmt.Println("wrote", filename)
-
-						return nil
+				versions := protocol.ValidVersions{To: message.ValidVersions.To}
+				if opts.last > 0 {
+					if from := message.ValidVersions.To - opts.last + 1; from > 0 {
+						versions.From = from
 					}
+				}
 
-					if err := fn(); err != nil {
+				fn := func() error {
+					rel := path
+					if strings.HasPrefix(rel, opts.templates) {
+						rel = rel[len(opts.templates):]
+					}
+					filename, err := interpolate(filepath.Join(opts.dir, rel), message, 0)
+					if err != nil {
 						return err
 					}
+
+					if ext := filepath.Ext(filename); strings.HasPrefix(ext, suffix) && len(ext) > len(suffix) {
+						filename = filename[0:len(filename)-len(ext)] + "." + ext[len(suffix):]
+					}
+
+					if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
+						return err
+					}
+
+					f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+					if err != nil {
+						return err
+					}
+					defer f.Close()
+
+					data := map[string]interface{}{
+						"Module":   opts.module,
+						"Package":  "v0",
+						"Message":  message,
+						"Versions": versions,
+					}
+
+					if err := t.Execute(f, data); err != nil {
+						return err
+					}
+					fmt.Println("wrote", filename)
+
+					return nil
+				}
+
+				if err := fn(); err != nil {
+					return err
 				}
 			}
 		default:
@@ -229,10 +240,10 @@ func action(_ *cli.Context) error {
 }
 
 type VersionFields struct {
-	ApiKey  int
-	Fields  []protocol.Field
-	Name    string
-	Version int
+	ApiKey   int
+	Fields   []protocol.Field
+	Name     string
+	Versions protocol.ValidVersions
 }
 
 var funcMap = template.FuncMap{
@@ -240,12 +251,17 @@ var funcMap = template.FuncMap{
 	"capitalize":       capitalize,
 	"findStructs":      findStructs,
 	"findStructFields": findStructFields,
-	"forVersion": func(version int, fields []protocol.Field) []protocol.Field {
+	"forVersion": func(versions protocol.ValidVersions, fields []protocol.Field) []protocol.Field {
 		var valid []protocol.Field
+
+	loop:
 		for _, f := range fields {
 			field := f
-			if f.Versions.IsValid(version) {
-				valid = append(valid, field)
+			for version := versions.From; version <= versions.To; version++ {
+				if f.Versions.IsValid(version) {
+					valid = append(valid, field)
+					continue loop
+				}
 			}
 		}
 		return valid
@@ -259,12 +275,12 @@ var funcMap = template.FuncMap{
 	"structName": func(a string) string {
 		return strings.ReplaceAll(a, "[]", "")
 	},
-	"toVersionFields": func(version int, message protocol.Message) VersionFields {
+	"toVersionFields": func(versions protocol.ValidVersions, message protocol.Message) VersionFields {
 		return VersionFields{
-			ApiKey:  message.ApiKey,
-			Fields:  message.Fields,
-			Name:    message.Name,
-			Version: version,
+			ApiKey:   message.ApiKey,
+			Fields:   message.Fields,
+			Name:     message.Name,
+			Versions: versions,
 		}
 	},
 	"type": func(v string) string { return strings.ReplaceAll(v, "[]", "") },
@@ -375,36 +391,36 @@ func interpolate(path string, message protocol.Message, version int) (string, er
 	return buf.String(), nil
 }
 
-func findStructFields(apiKey, version int, fields []protocol.Field) []VersionFields {
+func findStructFields(apiKey int, versions protocol.ValidVersions, fields []protocol.Field) []VersionFields {
 	var structFields []VersionFields
 	for _, f := range fields {
 		if len(f.Fields) == 0 {
 			continue
 		}
-		if !f.Versions.IsValid(version) {
+		if !f.Versions.IsValidVersions(versions) {
 			continue
 		}
 
 		item := VersionFields{
-			ApiKey:  apiKey,
-			Fields:  f.Fields,
-			Name:    baseType(f.Type) + strconv.Itoa(apiKey),
-			Version: version,
+			ApiKey:   apiKey,
+			Fields:   f.Fields,
+			Name:     baseType(f.Type) + strconv.Itoa(apiKey),
+			Versions: versions,
 		}
 		structFields = append(structFields, item)
-		structFields = append(structFields, findStructFields(apiKey, version, f.Fields)...)
+		structFields = append(structFields, findStructFields(apiKey, versions, f.Fields)...)
 	}
 	return structFields
 }
 
-func findStructs(apiKey, version int, message protocol.Message) []VersionFields {
-	structFields := findStructFields(apiKey, version, message.Fields)
+func findStructs(apiKey int, versions protocol.ValidVersions, message protocol.Message) []VersionFields {
+	structFields := findStructFields(apiKey, versions, message.Fields)
 	for _, f := range message.CommonStructs {
 		item := VersionFields{
-			ApiKey:  apiKey,
-			Fields:  f.Fields,
-			Name:    f.Name + strconv.Itoa(apiKey),
-			Version: version,
+			ApiKey:   apiKey,
+			Fields:   f.Fields,
+			Name:     f.Name + strconv.Itoa(apiKey),
+			Versions: versions,
 		}
 		structFields = append(structFields, item)
 	}

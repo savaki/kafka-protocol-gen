@@ -2,13 +2,13 @@ package {{ .Package }}
 
 import (
   "{{ .Module }}/protocol"
-{{- if gt (.Message.Fields | forVersion $.Version | len) 0 }}
+{{- if gt (.Message.Fields | forVersion $.Versions | len) 0 }}
   "{{ .Module }}/protocol/sizeof"
 {{- end }}
 )
 
 type {{ .Message.Name }} struct {
-{{- range .Message.Fields | forVersion $.Version }}
+{{- range .Message.Fields | forVersion $.Versions }}
 {{- if .Type | isStructArray }}
   {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} //{{ if .About }} {{ .About }}{{ end }} Versions: {{ .Versions }}
 {{- end }}
@@ -18,14 +18,14 @@ type {{ .Message.Name }} struct {
 {{- end }}
 }
 
-{{ template "_size.gogo" (toVersionFields $.Version .Message) }}
-{{ template "_marshal.gogo" (toVersionFields $.Version .Message) }}
-{{ template "_unmarshal.gogo" (toVersionFields $.Version .Message) }}
+{{ template "_size.gogo" (toVersionFields $.Versions .Message) }}
+{{ template "_marshal.gogo" (toVersionFields $.Versions .Message) }}
+{{ template "_unmarshal.gogo" (toVersionFields $.Versions .Message) }}
 
-{{- range (findStructs .Message.ApiKey .Version .Message) }}
+{{- range (findStructs .Message.ApiKey .Versions .Message) }}
 
 type {{ .Name }} struct {
-{{- range .Fields | forVersion .Version }}
+{{- range .Fields | forVersion .Versions }}
 {{- if .Type | isStructArray }}
   {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} //{{ if .About }} {{ .About }}{{ end }} Versions: {{ .Versions }}
 {{- end }}

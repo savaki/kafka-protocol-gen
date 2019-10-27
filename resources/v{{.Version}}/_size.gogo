@@ -1,6 +1,6 @@
 func (t {{ .Name }}) Size() int32 {
   var sz int32
-{{- range $i, $f := .Fields | forVersion .Version }}
+{{- range $i, $f := .Fields | forVersion .Versions }}
 {{- if .Type | isPrimitiveArray }}
   sz += sizeof.{{ $f.Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}

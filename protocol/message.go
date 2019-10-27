@@ -80,6 +80,15 @@ func (v Versions) IsValid(version int) bool {
 	return version >= v.From && (version <= v.To || v.UpToCurrent)
 }
 
+func (v Versions) IsValidVersions(versions ValidVersions) bool {
+	for version := versions.From; version <= versions.To; version++ {
+		if v.IsValid(version) {
+			return true
+		}
+	}
+	return false
+}
+
 func (v Versions) String() string {
 	if v.UpToCurrent {
 		return strconv.Itoa(v.From) + "+"
