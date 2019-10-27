@@ -17,7 +17,15 @@ func IsInsufficientDataError(err error) bool {
 
 type Decoder struct {
 	raw    []byte
+	length int
 	offset int
+}
+
+func NewDecoder(raw []byte, length int) *Decoder {
+	return &Decoder{
+		raw:    raw,
+		length: length,
+	}
 }
 
 func (d *Decoder) remains(n int) error {

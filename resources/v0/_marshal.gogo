@@ -1,5 +1,9 @@
-func (t {{ .Name }}) Marshal(encoder *protocol.Encoder, version int) {
+// Marshal {{ .Name }}; Versions: {{ .Versions }}
+func (t {{ .Name }}) Marshal(version int, encoder *protocol.Encoder) {
 {{- range $i, $f := .Fields | forVersion .Versions }}
+{{- if (isPartialOverlap $.Versions $f.Versions) }}
+  if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {
+{{- end }}
 {{- if .Type | isPrimitiveArray }}
   encoder.Put{{ .Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
@@ -11,12 +15,15 @@ func (t {{ .Name }}) Marshal(encoder *protocol.Encoder, version int) {
   	length := len(t.{{ $f.Name }})
     encoder.PutArrayLength(length)
   	for i := 0 ; i < length ; i++ {
-      t.{{ $f.Name }}[i].Marshal(encoder, version)
+      t.{{ $f.Name }}[i].Marshal(version, encoder)
   	}
   }
 {{- end }}
 {{- if .Type | isArray | not }}
   encoder.Put{{ .Type | capitalize }}(t.{{ $f.Name}}) // {{ $f.Name }}
+{{- end }}
+{{- if (isPartialOverlap $.Versions $f.Versions) }}
+  }
 {{- end }}
 {{- end }}
 }

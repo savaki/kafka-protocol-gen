@@ -40,6 +40,13 @@ type ValidVersions struct {
 	To   int
 }
 
+func (v ValidVersions) String() string {
+	if v.From == v.To {
+		return strconv.Itoa(v.From)
+	}
+	return strconv.Itoa(v.From) + "-" + strconv.Itoa(v.To)
+}
+
 // UnmarshalJSON implements json.Unmarshaler
 func (v *ValidVersions) UnmarshalJSON(data []byte) error {
 	match := reValidVersions.FindSubmatch(data)
@@ -77,7 +84,7 @@ type Versions struct {
 }
 
 func (v Versions) IsValid(version int) bool {
-	return version >= v.From && (version <= v.To || v.UpToCurrent)
+	return version >= v.From && ((!v.UpToCurrent && version <= v.To) || v.UpToCurrent)
 }
 
 func (v Versions) IsValidVersions(versions ValidVersions) bool {

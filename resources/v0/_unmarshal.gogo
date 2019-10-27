@@ -1,7 +1,11 @@
-func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder, version int) error {
+// Unmarshal {{ .Name }}; Versions: {{ .Versions }}
+func (t *{{ .Name }}) Unmarshal(version int, decoder *protocol.Decoder) error {
   var err error
 {{- range $i, $f := .Fields | forVersion .Versions }}
 
+{{- if (isPartialOverlap $.Versions $f.Versions) }}
+  if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {
+{{- end }}
 {{- if .Type | isPrimitiveArray }}
   t.{{ $f.Name }}, err = decoder.{{ $f.Type | baseType | capitalize }}Array()
   if err != nil {
@@ -16,7 +20,7 @@ if n, err := decoder.ArrayLength(); err != nil {
     t.{{ $f.Name }} = make({{ $f.Type }}{{ $.ApiKey}}, n)
     for i := 0; i < n; i++ {
       var item {{ $f.Type | baseType }}{{ $.ApiKey}}
-      if err := (&item).Unmarshal(decoder, version); err != nil {
+      if err := (&item).Unmarshal(version, decoder); err != nil {
         return err
       }
       t.{{ $f.Name }}[i] = item
@@ -27,6 +31,9 @@ if n, err := decoder.ArrayLength(); err != nil {
   t.{{ $f.Name }}, err = decoder.{{ $f.Type | capitalize }}()
   if err != nil {
     return err
+  }
+{{- end }}
+{{- if (isPartialOverlap $.Versions $f.Versions) }}
   }
 {{- end }}
 {{- end }}

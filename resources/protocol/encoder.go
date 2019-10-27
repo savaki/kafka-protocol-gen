@@ -15,6 +15,12 @@ type Encoder struct {
 	err    error
 }
 
+func NewEncoder(target io.Writer) *Encoder {
+	return &Encoder{
+		target: target,
+	}
+}
+
 func (e *Encoder) Flush() error {
 	if e.err != nil {
 		return e.err

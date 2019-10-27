@@ -156,7 +156,7 @@ func action(_ *cli.Context) error {
 					if strings.HasPrefix(rel, opts.templates) {
 						rel = rel[len(opts.templates):]
 					}
-					filename, err := interpolate(filepath.Join(opts.dir, rel), message, 0)
+					filename, err := interpolate(filepath.Join(opts.dir, rel), message, message.ApiKey)
 					if err != nil {
 						return err
 					}
@@ -269,6 +269,7 @@ var funcMap = template.FuncMap{
 	"goType":           goType,
 	"isArray":          isArray,
 	"isBytes":          isBytes,
+	"isPartialOverlap": isPartialOverlap,
 	"isPrimitiveArray": isPrimitiveArray,
 	"isString":         isString,
 	"isStructArray":    isStructArray,
@@ -313,6 +314,18 @@ func isArray(t string) bool {
 
 func isBytes(t string) bool {
 	return t == "bytes"
+}
+
+func isPartialOverlap(valid protocol.ValidVersions, versions protocol.Versions) bool {
+	var matches int
+	for version := valid.From; version <= valid.To; version++ {
+		if versions.IsValid(version) {
+			matches++
+		}
+	}
+
+	want := (valid.To - valid.From) + 1
+	return matches != want
 }
 
 func isPrimitiveArray(t string) bool {
@@ -373,7 +386,7 @@ func snakeCase(v string) string {
 	return string(updated)
 }
 
-func interpolate(path string, message protocol.Message, version int) (string, error) {
+func interpolate(path string, message protocol.Message, apiKey int) (string, error) {
 	t, err := template.New("path").Parse(path)
 	if err != nil {
 		return "", err
@@ -382,7 +395,7 @@ func interpolate(path string, message protocol.Message, version int) (string, er
 	buf := bytes.NewBuffer(nil)
 	data := map[string]interface{}{
 		"MessageName": snakeCase(message.Name),
-		"Version":     version,
+		"ApiKey":      apiKey,
 	}
 	if err := t.Execute(buf, data); err != nil {
 		return "", err

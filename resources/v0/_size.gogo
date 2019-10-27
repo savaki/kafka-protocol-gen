@@ -1,13 +1,17 @@
-func (t {{ .Name }}) Size() int32 {
+// Size of {{ .Name }}; Versions: {{ .Versions }}
+func (t {{ .Name }}) Size(version int) int32 {
   var sz int32
 {{- range $i, $f := .Fields | forVersion .Versions }}
+{{- if (isPartialOverlap $.Versions $f.Versions) }}
+  if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {
+{{- end }}
 {{- if .Type | isPrimitiveArray }}
   sz += sizeof.{{ $f.Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
 {{- if .Type | isStructArray }}
   sz += sizeof.ArrayLength // {{ $f.Name }}
   for i := len(t.{{ $f.Name }}) - 1 ; i >= 0 ; i-- {
-    sz += t.{{ $f.Name }}[i].Size()
+    sz += t.{{ $f.Name }}[i].Size(version)
   }
 {{- end }}
 {{- if .Type | isBytes }}
@@ -18,6 +22,9 @@ func (t {{ .Name }}) Size() int32 {
 {{- end }}
 {{- if and (.Type | isArray | not) (.Type | isString | not) (.Type | isBytes | not) }}
   sz += sizeof.{{ .Type | capitalize }} // {{ $f.Name }}
+{{- end }}
+{{- if (isPartialOverlap $.Versions $f.Versions) }}
+  }
 {{- end }}
 {{- end }}
   return sz
