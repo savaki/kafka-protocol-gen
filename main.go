@@ -166,7 +166,6 @@ func action(_ *cli.Context) error {
 							"Module":  opts.module,
 							"Package": "v" + strconv.Itoa(version),
 							"Message": message,
-							"Structs": findStructFields(message.Fields),
 							"Version": version,
 						}
 
@@ -235,7 +234,9 @@ type VersionFields struct {
 }
 
 var funcMap = template.FuncMap{
-	"capitalize": capitalize,
+	"baseType":         func(v string) string { return strings.ReplaceAll(v, "[]", "") },
+	"capitalize":       capitalize,
+	"findStructFields": findStructFields,
 	"forVersion": func(version int, fields []protocol.Field) []protocol.Field {
 		var valid []protocol.Field
 		for _, f := range fields {
@@ -290,7 +291,7 @@ func isPrimitiveArray(t string) bool {
 }
 
 func isStructArray(t string) bool {
-	return !isPrimitiveArray(t)
+	return isArray(t) && !isPrimitiveArray(t)
 }
 
 var re = regexp.MustCompile(`^[^A-Za-z0-9]*([A-Z0-9]*)([a-z0-9]*)`)
@@ -357,16 +358,23 @@ func interpolate(path string, message protocol.Message, version int) (string, er
 	return buf.String(), nil
 }
 
-func findStructFields(fields []protocol.Field) []protocol.Field {
-	var structFields []protocol.Field
+func findStructFields(version int, fields []protocol.Field) []VersionFields {
+	var structFields []VersionFields
 	for _, f := range fields {
-		field := f
-		if len(field.Fields) == 0 {
+		if len(f.Fields) == 0 {
+			continue
+		}
+		if version < f.Versions.From || version > f.Versions.To {
 			continue
 		}
 
-		structFields = append(structFields, field)
-		structFields = append(structFields, findStructFields(field.Fields)...)
+		item := VersionFields{
+			Fields:  f.Fields,
+			Name:    strings.ReplaceAll(f.Type, "[]", ""),
+			Version: version,
+		}
+		structFields = append(structFields, item)
+		structFields = append(structFields, findStructFields(version, f.Fields)...)
 	}
 	return structFields
 }

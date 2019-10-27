@@ -1,6 +1,9 @@
 func (t {{ .Name }}) Marshal(encoder *protocol.Encoder) {
 {{- range $i, $f := .Fields | forVersion .Version }}
-{{- if .Type | isArray }}
+{{- if .Type | isPrimitiveArray }}
+  encoder.Put{{ .Type | baseType | capitalize }}Array(t.{{ $f.Name }})
+{{- end }}
+{{- if .Type | isStructArray }}
   encoder.PutArray(len(t.{{ $f.Name }}), func(i int) { t.{{ $f.Name }}[i].Marshal(encoder) })
 {{- end }}
 {{- if .Type | isArray | not }}

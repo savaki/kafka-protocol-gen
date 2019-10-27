@@ -16,3 +16,16 @@ type {{ .Message.Name }} struct {
 {{ template "_size.gogo" (toVersionFields $.Version .Message) }}
 {{ template "_marshal.gogo" (toVersionFields $.Version .Message) }}
 {{ template "_unmarshal.gogo" (toVersionFields $.Version .Message) }}
+
+{{- range (findStructFields .Version .Message.Fields) }}
+
+type {{ .Name }} struct {
+{{- range .Fields | forVersion .Version }}
+  {{ .Name }} {{ .Type }} {{ if .About }}// {{ .About }}{{ end }}
+{{- end }}
+}
+
+{{ template "_size.gogo" . }}
+{{ template "_marshal.gogo" . }}
+{{ template "_unmarshal.gogo" . }}
+{{- end }}

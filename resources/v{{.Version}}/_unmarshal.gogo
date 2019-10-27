@@ -1,7 +1,14 @@
 func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder) error {
   var err error
 {{- range $i, $f := .Fields | forVersion .Version }}
-{{- if .Type | isArray }}
+{{- if .Type | isPrimitiveArray }}
+
+  t.{{ $f.Name }}, err = decoder.{{ $f.Type | baseType | capitalize }}Array()
+  if err != nil {
+  	return err
+  }
+{{- end }}
+{{- if .Type | isStructArray }}
 
   // {{ $f.Name }}
   if n, err := decoder.ArrayLength(); err != nil {
@@ -9,8 +16,8 @@ func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder) error {
   } else if n >= 0 {
     t.{{ $f.Name }} = make({{ $f.Type }}, n)
     for i := 0; i < n; i++ {
-      item, err := decoder.Int32()
-      if err != nil {
+      var item {{ $f.Type | baseType }}
+      if err := (&item).Unmarshal(decoder); err != nil {
         return err
       }
       t.{{ $f.Name }}[i] = item
@@ -25,5 +32,6 @@ func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder) error {
   }
 {{- end }}
 {{- end }}
+
   return err
 }
