@@ -1,4 +1,4 @@
-func (t {{ .Name }}) Marshal(encoder *protocol.Encoder) {
+func (t {{ .Name }}) Marshal(encoder *protocol.Encoder, version int) {
 {{- range $i, $f := .Fields | forVersion .Version }}
 {{- if .Type | isPrimitiveArray }}
   encoder.Put{{ .Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
@@ -11,7 +11,7 @@ func (t {{ .Name }}) Marshal(encoder *protocol.Encoder) {
   	length := len(t.{{ $f.Name }})
     encoder.PutArrayLength(length)
   	for i := 0 ; i < length ; i++ {
-      t.{{ $f.Name }}[i].Marshal(encoder)
+      t.{{ $f.Name }}[i].Marshal(encoder, version)
   	}
   }
 {{- end }}

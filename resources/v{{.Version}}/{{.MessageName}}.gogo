@@ -10,10 +10,10 @@ import (
 type {{ .Message.Name }} struct {
 {{- range .Message.Fields | forVersion $.Version }}
 {{- if .Type | isStructArray }}
-  {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} {{ if .About }}// {{ .About }}{{ end }}
+  {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} //{{ if .About }} {{ .About }}{{ end }} Versions: {{ .Versions }}
 {{- end }}
 {{- if .Type | isStructArray | not }}
-  {{ .Name }} {{ .Type | goType }} {{ if .About }}// {{ .About }}{{ end }}
+  {{ .Name }} {{ .Type | goType }} //{{ if .About }} {{ .About }}{{ end }} Versions: {{ .Versions }}
 {{- end }}
 {{- end }}
 }
@@ -27,10 +27,10 @@ type {{ .Message.Name }} struct {
 type {{ .Name }} struct {
 {{- range .Fields | forVersion .Version }}
 {{- if .Type | isStructArray }}
-  {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} {{ if .About }}// {{ .About }}{{ end }}
+  {{ .Name }} {{ .Type }}{{ $.Message.ApiKey }} //{{ if .About }} {{ .About }}{{ end }} Versions: {{ .Versions }}
 {{- end }}
 {{- if .Type | isStructArray | not }}
-  {{ .Name }} {{ .Type | goType }} {{ if .About }}// {{ .About }}{{ end }}
+  {{ .Name }} {{ .Type | goType }} //{{ if .About }} {{ .About }}{{ end }} Versions: {{ .Versions }}
 {{- end }}
 {{- end }}
 }

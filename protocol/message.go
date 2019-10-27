@@ -80,6 +80,13 @@ func (v Versions) IsValid(version int) bool {
 	return version >= v.From && (version <= v.To || v.UpToCurrent)
 }
 
+func (v Versions) String() string {
+	if v.UpToCurrent {
+		return strconv.Itoa(v.From) + "+"
+	}
+	return strconv.Itoa(v.From) + "-" + strconv.Itoa(v.To)
+}
+
 // UnmarshalJSON implements json.Unmarshaler
 func (v *Versions) UnmarshalJSON(data []byte) error {
 	match := reVersions.FindSubmatch(data)
