@@ -84,6 +84,10 @@ func (d *Decoder) Int32Array() ([]int32, error) {
 		return nil, err
 	}
 
+	if n == -1 {
+		return nil, nil
+	}
+
 	items := make([]int32, n)
 	for i := int32(0); i < n; i++ {
 		item, err := d.Int32()
@@ -109,6 +113,10 @@ func (d *Decoder) Int64Array() ([]int64, error) {
 	n, err := d.Int32()
 	if err != nil {
 		return nil, err
+	}
+
+	if n == -1 {
+		return nil, nil
 	}
 
 	items := make([]int64, n)
@@ -159,6 +167,10 @@ func (d *Decoder) StringArray() ([]string, error) {
 	n, err := d.Int32()
 	if err != nil {
 		return nil, err
+	}
+
+	if n == -1 {
+		return nil, nil
 	}
 
 	items := make([]string, n)
