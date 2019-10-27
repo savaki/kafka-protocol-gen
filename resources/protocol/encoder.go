@@ -38,6 +38,14 @@ func (e *Encoder) PutArray(n int, fn func(int)) {
 	}
 }
 
+func (e *Encoder) PutArrayLength(n int) {
+	if e.err != nil {
+		return
+	}
+
+	e.PutInt32(int32(n))
+}
+
 func (e *Encoder) PutBool(b bool) {
 	var v int8
 	if b {

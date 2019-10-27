@@ -75,6 +75,10 @@ type Versions struct {
 	UpToCurrent bool // Versions up to current are supported
 }
 
+func (v Versions) IsValid(version int) bool {
+	return version >= v.From && (version <= v.To || v.UpToCurrent)
+}
+
 // UnmarshalJSON implements json.Unmarshaler
 func (v *Versions) UnmarshalJSON(data []byte) error {
 	match := reVersions.FindSubmatch(data)

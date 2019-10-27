@@ -9,7 +9,7 @@ import (
 
 type {{ .Message.Name }} struct {
 {{- range .Message.Fields | forVersion $.Version }}
-  {{ .Name }} {{ .Type }} {{ if .About }}// {{ .About }}{{ end }}
+  {{ .Name }} {{ .Type | goType }} {{ if .About }}// {{ .About }}{{ end }}
 {{- end }}
 }
 
@@ -21,7 +21,7 @@ type {{ .Message.Name }} struct {
 
 type {{ .Name }} struct {
 {{- range .Fields | forVersion .Version }}
-  {{ .Name }} {{ .Type }} {{ if .About }}// {{ .About }}{{ end }}
+  {{ .Name }} {{ .Type | goType }} {{ if .About }}// {{ .About }}{{ end }}
 {{- end }}
 }
 

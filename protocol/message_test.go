@@ -81,3 +81,49 @@ func TestVersions_UnmarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestVersions_IsValid(t *testing.T) {
+	testCases := map[string]struct {
+		Versions Versions
+		Version  int
+		Want     bool
+	}{
+		"scalar": {
+			Versions: Versions{},
+			Version:  0,
+			Want:     true,
+		},
+		"0+": {
+			Versions: Versions{
+				UpToCurrent: true,
+			},
+			Version: 1,
+			Want:    true,
+		},
+		"above range": {
+			Versions: Versions{
+				From: 1,
+				To:   3,
+			},
+			Version: 4,
+			Want:    false,
+		},
+		"below range": {
+			Versions: Versions{
+				From: 1,
+				To:   3,
+			},
+			Version: 0,
+			Want:    false,
+		},
+	}
+
+	for label, tc := range testCases {
+		t.Run(label, func(t *testing.T) {
+			got := tc.Versions.IsValid(tc.Version)
+			if got != tc.Want {
+				t.Fatalf("got %v; want %v", got, tc.Want)
+			}
+		})
+	}
+}

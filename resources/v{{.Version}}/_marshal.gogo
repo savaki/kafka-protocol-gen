@@ -1,10 +1,20 @@
 func (t {{ .Name }}) Marshal(encoder *protocol.Encoder) {
 {{- range $i, $f := .Fields | forVersion .Version }}
+
+  // {{ $f.Name }}
 {{- if .Type | isPrimitiveArray }}
   encoder.Put{{ .Type | baseType | capitalize }}Array(t.{{ $f.Name }})
 {{- end }}
 {{- if .Type | isStructArray }}
-  encoder.PutArray(len(t.{{ $f.Name }}), func(i int) { t.{{ $f.Name }}[i].Marshal(encoder) })
+  if t.{{ $f.Name }} == nil {
+    encoder.PutArrayLength(-1)
+  } else {
+  	length := len(t.{{ $f.Name }})
+    encoder.PutArrayLength(length)
+  	for i := 0 ; i < length ; i++ {
+      t.{{ $f.Name }}[i].Marshal(encoder)
+  	}
+  }
 {{- end }}
 {{- if .Type | isArray | not }}
   encoder.Put{{ .Type | capitalize }}(t.{{ $f.Name}})

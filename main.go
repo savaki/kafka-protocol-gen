@@ -14,7 +14,8 @@ import (
 
 	"github.com/rakyll/statik/fs"
 	"github.com/savaki/kafka-protocol-gen/protocol"
-	_ "github.com/savaki/kafka-protocol-gen/render/statik"
+
+	//_ "github.com/savaki/kafka-protocol-gen/render/statik"
 	"github.com/urfave/cli"
 )
 
@@ -234,19 +235,20 @@ type VersionFields struct {
 }
 
 var funcMap = template.FuncMap{
-	"baseType":         func(v string) string { return strings.ReplaceAll(v, "[]", "") },
+	"baseType":         baseType,
 	"capitalize":       capitalize,
 	"findStructFields": findStructFields,
 	"forVersion": func(version int, fields []protocol.Field) []protocol.Field {
 		var valid []protocol.Field
 		for _, f := range fields {
 			field := f
-			if version >= field.Versions.From && (version <= field.Versions.To || field.Versions.UpToCurrent) {
+			if f.Versions.IsValid(version) {
 				valid = append(valid, field)
 			}
 		}
 		return valid
 	},
+	"goType":           goType,
 	"isArray":          isArray,
 	"isPrimitiveArray": isPrimitiveArray,
 	"isString":         isString,
@@ -275,12 +277,25 @@ var funcMap = template.FuncMap{
 	"type": func(v string) string { return strings.ReplaceAll(v, "[]", "") },
 }
 
+func baseType(v string) string {
+	return strings.ReplaceAll(v, "[]", "")
+}
+
 func capitalize(v string) string {
 	if len(v) == 0 {
 		return ""
 	}
 
 	return strings.ToUpper(v[0:1]) + v[1:]
+}
+
+func goType(t string) string {
+	switch t {
+	case "bytes":
+		return "[]byte"
+	default:
+		return t
+	}
 }
 
 func isArray(t string) bool {
@@ -369,13 +384,13 @@ func findStructFields(version int, fields []protocol.Field) []VersionFields {
 		if len(f.Fields) == 0 {
 			continue
 		}
-		if version < f.Versions.From || version > f.Versions.To {
+		if !f.Versions.IsValid(version) {
 			continue
 		}
 
 		item := VersionFields{
 			Fields:  f.Fields,
-			Name:    strings.ReplaceAll(f.Type, "[]", ""),
+			Name:    baseType(f.Type),
 			Version: version,
 		}
 		structFields = append(structFields, item)
