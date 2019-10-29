@@ -177,7 +177,7 @@ func action(_ *cli.Context) error {
 
 					data := map[string]interface{}{
 						"Module":   opts.module,
-						"Package":  "v0",
+						"Package":  filepath.Base(opts.module),
 						"Message":  message,
 						"Versions": versions,
 					}
@@ -217,7 +217,8 @@ func action(_ *cli.Context) error {
 				defer f.Close()
 
 				data := map[string]interface{}{
-					"Module": opts.module,
+					"Module":  opts.module,
+					"Package": filepath.Base(opts.module),
 				}
 
 				if err := t.Execute(f, data); err != nil {

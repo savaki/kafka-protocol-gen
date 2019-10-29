@@ -1,5 +1,5 @@
 // Marshal {{ .Name }}; Versions: {{ .Versions }}
-func (t {{ .Name }}) Marshal(encoder *protocol.Encoder, version int) {
+func (t {{ .Name }}) Marshal(encoder *Encoder, version int) {
 {{- range $i, $f := .Fields | forVersion .Versions }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}
   if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {

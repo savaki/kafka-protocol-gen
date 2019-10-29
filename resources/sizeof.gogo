@@ -1,0 +1,35 @@
+package {{ .Package }}
+
+const (
+	szBool        int32 = 1
+	szInt8        int32 = 1
+	szInt16       int32 = 2
+	szInt32       int32 = 4
+	szInt64       int32 = 8
+	szArrayLength       = szInt32
+)
+
+func szBytes(data []byte) int32 {
+	return szArrayLength + int32(len(data)) // int32 length + length of bytes
+}
+
+func szInt32Array(ii []int32) int32 {
+	return szArrayLength + int32(len(ii))*szInt32 // int32 length + length of array * int32 length
+}
+
+func szInt64Array(ii []int64) int32 {
+	return szArrayLength + int32(len(ii))*szInt64 // int32 length + length of array * int64 length
+}
+
+func szString(s string) int32 {
+	return szInt16 + int32(len(s))
+}
+
+func szStringArray(ss []string) int32 {
+	var sz int32
+	sz += szArrayLength // int32 length of array
+	for _, s := range ss {
+		sz += szString(s)
+	}
+	return sz
+}

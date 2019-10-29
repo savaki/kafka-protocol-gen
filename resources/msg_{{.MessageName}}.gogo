@@ -1,12 +1,5 @@
 package {{ .Package }}
 
-import (
-  "{{ .Module }}/protocol"
-{{- if gt (.Message.Fields | forVersion $.Versions | len) 0 }}
-  "{{ .Module }}/protocol/sizeof"
-{{- end }}
-)
-
 // {{ .Message.Name }}; ApiKey: {{ .Message.ApiKey}}, Versions: {{ .Versions }}
 type {{ .Message.Name }} struct {
 {{- range .Message.Fields | forVersion $.Versions }}

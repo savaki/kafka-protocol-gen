@@ -1,5 +1,5 @@
 // Unmarshal {{ .Name }}; Versions: {{ .Versions }}
-func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder, version int) error {
+func (t *{{ .Name }}) Unmarshal(decoder *Decoder, version int) error {
   var err error
 {{- range $i, $f := .Fields | forVersion .Versions }}
 
