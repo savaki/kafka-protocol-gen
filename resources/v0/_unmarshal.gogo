@@ -1,5 +1,5 @@
 // Unmarshal {{ .Name }}; Versions: {{ .Versions }}
-func (t *{{ .Name }}) Unmarshal(version int, decoder *protocol.Decoder) error {
+func (t *{{ .Name }}) Unmarshal(decoder *protocol.Decoder, version int) error {
   var err error
 {{- range $i, $f := .Fields | forVersion .Versions }}
 
@@ -20,7 +20,7 @@ if n, err := decoder.ArrayLength(); err != nil {
     t.{{ $f.Name }} = make({{ $f.Type }}{{ $.ApiKey}}, n)
     for i := 0; i < n; i++ {
       var item {{ $f.Type | baseType }}{{ $.ApiKey}}
-      if err := (&item).Unmarshal(version, decoder); err != nil {
+      if err := (&item).Unmarshal(decoder, version); err != nil {
         return err
       }
       t.{{ $f.Name }}[i] = item
