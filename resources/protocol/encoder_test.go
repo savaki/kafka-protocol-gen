@@ -16,8 +16,6 @@ func TestEncoder_err(t *testing.T) {
 		}
 	)
 
-	encoder.PutArray(1, func(int) {})
-
 	var b bool
 	encoder.PutBool(b)
 

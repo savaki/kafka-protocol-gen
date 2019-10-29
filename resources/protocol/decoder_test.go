@@ -498,7 +498,7 @@ func TestDecoder_PutVarInt(t *testing.T) {
 			}
 
 			decoder := &Decoder{raw: buf.Bytes()}
-			err = decoder.VarInt(&got)
+			got, err = decoder.VarInt()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
 			}

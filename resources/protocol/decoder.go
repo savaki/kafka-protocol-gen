@@ -11,16 +11,20 @@ var (
 	errVarIntOverflow   = errors.New("var int overflow")
 )
 
+// IsInsufficientDataError if the buffer has insufficient data to unmarshal
+// the message
 func IsInsufficientDataError(err error) bool {
 	return errors.Is(err, errInsufficientData)
 }
 
+// Decoder implements a generic protocol decoder
 type Decoder struct {
 	raw    []byte
 	length int
 	offset int
 }
 
+// NewDecoder returns a new Decoder
 func NewDecoder(raw []byte, length int) *Decoder {
 	return &Decoder{
 		raw:    raw,
@@ -28,6 +32,7 @@ func NewDecoder(raw []byte, length int) *Decoder {
 	}
 }
 
+// remains ensures that the buffer contains at least n more bytes
 func (d *Decoder) remains(n int) error {
 	if remain := len(d.raw) - d.offset; remain < n {
 		return errInsufficientData
@@ -35,6 +40,7 @@ func (d *Decoder) remains(n int) error {
 	return nil
 }
 
+// ArrayLength reads the head of the buffer as an array length (int32)
 func (d *Decoder) ArrayLength() (int, error) {
 	n, err := d.Int32()
 	if err != nil {
@@ -43,6 +49,7 @@ func (d *Decoder) ArrayLength() (int, error) {
 	return int(n), nil
 }
 
+// Bool returns the buffer head as a bool
 func (d *Decoder) Bool() (bool, error) {
 	if err := d.remains(1); err != nil {
 		return false, err
@@ -52,6 +59,7 @@ func (d *Decoder) Bool() (bool, error) {
 	return b, nil
 }
 
+// Bytes returns the buffer head as a byte array
 func (d *Decoder) Bytes() ([]byte, error) {
 	n, err := d.Int32()
 	if err != nil {
@@ -67,6 +75,7 @@ func (d *Decoder) Bytes() ([]byte, error) {
 	return v, nil
 }
 
+// Int8 returns the buffer head as an int8
 func (d *Decoder) Int8() (int8, error) {
 	if err := d.remains(1); err != nil {
 		return 0, err
@@ -76,6 +85,7 @@ func (d *Decoder) Int8() (int8, error) {
 	return v, nil
 }
 
+// Int16 returns the buffer head as an int16
 func (d *Decoder) Int16() (int16, error) {
 	if err := d.remains(2); err != nil {
 		return 0, err
@@ -85,6 +95,7 @@ func (d *Decoder) Int16() (int16, error) {
 	return v, nil
 }
 
+// Int32 returns the buffer head as an int32
 func (d *Decoder) Int32() (int32, error) {
 	if err := d.remains(4); err != nil {
 		return 0, err
@@ -94,6 +105,7 @@ func (d *Decoder) Int32() (int32, error) {
 	return v, nil
 }
 
+// Int32Array returns the buffer head as an []int32
 func (d *Decoder) Int32Array() ([]int32, error) {
 	n, err := d.ArrayLength()
 	if err != nil {
@@ -116,6 +128,7 @@ func (d *Decoder) Int32Array() ([]int32, error) {
 	return items, nil
 }
 
+// Int64 returns the buffer head as an int64
 func (d *Decoder) Int64() (int64, error) {
 	if err := d.remains(8); err != nil {
 		return 0, err
@@ -125,6 +138,7 @@ func (d *Decoder) Int64() (int64, error) {
 	return v, nil
 }
 
+// Int64Array returns the buffer head as an []int64
 func (d *Decoder) Int64Array() ([]int64, error) {
 	n, err := d.ArrayLength()
 	if err != nil {
@@ -147,6 +161,7 @@ func (d *Decoder) Int64Array() ([]int64, error) {
 	return items, nil
 }
 
+// NullableString returns the buffer head as a *string
 func (d *Decoder) NullableString() (*string, error) {
 	s, err := d.String()
 	if err != nil {
@@ -159,6 +174,7 @@ func (d *Decoder) NullableString() (*string, error) {
 	return &s, nil
 }
 
+// String returns the buffer head as a string
 func (d *Decoder) String() (string, error) {
 	n, err := d.Int16()
 	if err != nil {
@@ -179,6 +195,7 @@ func (d *Decoder) String() (string, error) {
 	return s, nil
 }
 
+// StringArray returns the buffer head as a []string
 func (d *Decoder) StringArray() ([]string, error) {
 	n, err := d.ArrayLength()
 	if err != nil {
@@ -201,20 +218,20 @@ func (d *Decoder) StringArray() ([]string, error) {
 	return items, nil
 }
 
-func (d *Decoder) VarInt(v *int64) error {
+// VarInt returns the buffer head as an int64
+func (d *Decoder) VarInt() (int64, error) {
 	tmp, n := binary.Varint(d.raw[d.offset:])
 	switch n {
 	case 0:
 		d.offset = len(d.raw) // no further requests can be made
-		return errInsufficientData
+		return 0, errInsufficientData
 
 	case -1:
 		d.offset = len(d.raw) // no further requests can be made
-		return errVarIntOverflow
+		return 0, errVarIntOverflow
 
 	default:
 		d.offset += n
-		*v = tmp
-		return nil
+		return tmp, nil
 	}
 }
