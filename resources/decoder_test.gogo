@@ -23,6 +23,13 @@ import (
 	"testing"
 )
 
+func makeDecoder(data []byte) *Decoder {
+	sz := len(data)
+	rb := NewRingBuffer(sz * 2)
+	rb.WriteN(data, sz)
+	return NewDecoder(rb, sz)
+}
+
 func TestDecoder_PutBool(t *testing.T) {
 	testCases := map[string]struct {
 		want bool
@@ -49,7 +56,7 @@ func TestDecoder_PutBool(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Bool()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -91,7 +98,7 @@ func TestDecoder_PutBytes(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Bytes()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -130,7 +137,7 @@ func TestDecoder_PutInt8(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Int8()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -169,7 +176,7 @@ func TestDecoder_PutInt16(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Int16()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -208,7 +215,7 @@ func TestDecoder_PutInt32(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Int32()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -250,7 +257,7 @@ func TestDecoder_PutInt32Array(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Int32Array()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -289,7 +296,7 @@ func TestDecoder_PutInt64(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Int64()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -331,7 +338,7 @@ func TestDecoder_PutInt64Array(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.Int64Array()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -370,7 +377,7 @@ func TestDecoder_PutString(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.String()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -417,7 +424,7 @@ func TestDecoder_PutNullableString(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.NullableString()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -465,7 +472,7 @@ func TestDecoder_PutStringArray(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.StringArray()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
@@ -513,7 +520,7 @@ func TestDecoder_PutVarInt(t *testing.T) {
 				t.Fatalf("got %v; want nil", err)
 			}
 
-			decoder := &Decoder{raw: buf.Bytes()}
+			decoder := makeDecoder(buf.Bytes())
 			got, err = decoder.VarInt()
 			if err != nil {
 				t.Fatalf("got %v; want nil", err)
