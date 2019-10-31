@@ -1,26 +1,26 @@
 // Marshal {{ .Name }}; Versions: {{ .Versions }}
-func (t {{ .Name }}) Marshal(encoder *Encoder, version int) {
+func (t {{ .Name }}) Marshal(e *encoder, version int) {
 {{- range $i, $f := .Fields | forVersion .Versions }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}
   if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {
 {{- end }}
 {{- if .Type | isPrimitiveArray }}
-  encoder.Put{{ .Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
+  e.Put{{ .Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
 {{- if .Type | isStructArray }}
   // {{ $f.Name }}
   if t.{{ $f.Name }} == nil {
-    encoder.PutArrayLength(-1)
+    e.PutArrayLength(-1)
   } else {
   	length := len(t.{{ $f.Name }})
-    encoder.PutArrayLength(length)
+    e.PutArrayLength(length)
   	for i := 0 ; i < length ; i++ {
-      t.{{ $f.Name }}[i].Marshal(encoder, version)
+      t.{{ $f.Name }}[i].Marshal(e, version)
   	}
   }
 {{- end }}
 {{- if .Type | isArray | not }}
-  encoder.Put{{ .Type | capitalize }}(t.{{ $f.Name}}) // {{ $f.Name }}
+  e.Put{{ .Type | capitalize }}(t.{{ $f.Name}}) // {{ $f.Name }}
 {{- end }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}
   }

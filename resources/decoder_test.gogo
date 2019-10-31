@@ -46,9 +46,9 @@ func TestDecoder_PutBool(t *testing.T) {
         got bool
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutBool(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutBool(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -88,9 +88,9 @@ func TestDecoder_PutBytes(t *testing.T) {
         got []byte
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutBytes(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutBytes(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -127,9 +127,9 @@ func TestDecoder_PutInt8(t *testing.T) {
         got int8
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutInt8(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutInt8(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -166,9 +166,9 @@ func TestDecoder_PutInt16(t *testing.T) {
         got int16
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutInt16(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutInt16(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -205,9 +205,9 @@ func TestDecoder_PutInt32(t *testing.T) {
         got int32
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutInt32(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutInt32(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -247,9 +247,9 @@ func TestDecoder_PutInt32Array(t *testing.T) {
         got []int32
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutInt32Array(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutInt32Array(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -286,9 +286,9 @@ func TestDecoder_PutInt64(t *testing.T) {
         got int64
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutInt64(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutInt64(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -328,9 +328,9 @@ func TestDecoder_PutInt64Array(t *testing.T) {
         got []int64
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutInt64Array(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutInt64Array(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -367,9 +367,9 @@ func TestDecoder_PutString(t *testing.T) {
         got string
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutString(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutString(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -414,9 +414,9 @@ func TestDecoder_PutNullableString(t *testing.T) {
         got *string
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutNullableString(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutNullableString(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -462,9 +462,9 @@ func TestDecoder_PutStringArray(t *testing.T) {
         got []string
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutStringArray(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutStringArray(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
@@ -510,9 +510,9 @@ func TestDecoder_PutVarInt(t *testing.T) {
         got int64
       )
 
-      encoder := &Encoder{target: buf}
-      encoder.PutVarInt(tc.want)
-      err := encoder.Flush()
+      e := &encoder{target: buf}
+      e.PutVarInt(tc.want)
+      err := e.Flush()
       if err != nil {
         t.Fatalf("got %v; want nil", err)
       }
