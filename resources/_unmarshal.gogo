@@ -1,5 +1,5 @@
 // Unmarshal {{ .Name }}; Versions: {{ .Versions }}
-func (t *{{ .Name }}) Unmarshal(decoder *Decoder, version int) error {
+func (t *{{ .Name }}) Unmarshal(d *decoder, version int) error {
   var err error
 {{- range $i, $f := .Fields | forVersion .Versions }}
 
@@ -7,20 +7,20 @@ func (t *{{ .Name }}) Unmarshal(decoder *Decoder, version int) error {
   if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {
 {{- end }}
 {{- if .Type | isPrimitiveArray }}
-  t.{{ $f.Name }}, err = decoder.{{ $f.Type | baseType | capitalize }}Array()
+  t.{{ $f.Name }}, err = d.{{ $f.Type | baseType | capitalize }}Array()
   if err != nil {
   	return err
   }
 {{- end }}
 {{- if .Type | isStructArray }}
 // {{ $f.Name }}
-if n, err := decoder.ArrayLength(); err != nil {
+if n, err := d.ArrayLength(); err != nil {
     return err
   } else if n >= 0 {
     t.{{ $f.Name }} = make({{ $f.Type }}{{ $.ApiKey}}, n)
     for i := 0; i < n; i++ {
       var item {{ $f.Type | baseType }}{{ $.ApiKey}}
-      if err := (&item).Unmarshal(decoder, version); err != nil {
+      if err := (&item).Unmarshal(d, version); err != nil {
         return err
       }
       t.{{ $f.Name }}[i] = item
@@ -28,7 +28,7 @@ if n, err := decoder.ArrayLength(); err != nil {
   }
 {{- end }}
 {{- if $f.Type | isArray | not }}
-  t.{{ $f.Name }}, err = decoder.{{ $f.Type | capitalize }}()
+  t.{{ $f.Name }}, err = d.{{ $f.Type | capitalize }}()
   if err != nil {
     return err
   }

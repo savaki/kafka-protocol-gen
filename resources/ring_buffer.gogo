@@ -20,102 +20,109 @@ import (
 	"sync/atomic"
 )
 
+// RingBuffer implements a ring buffer that supports a single reader and
+// single writer.
 type RingBuffer struct {
-	data      []byte
-	start     int32
-	end       int32
-	lock      chan struct{}
-	lockState int32
-	size      int32
+  data      []byte        // data provides a temporary internal buffer
+  start     int32         // start position to read from
+  next      int32         // next position to write to
+  lock      chan struct{} // lock enables signaling between read and write goroutines
+  lockState int32         // lockState will either be 0 or 1
+  size      int32         // size of internal buffer
 }
 
+// NewRingBuffer returns a new RingBuffer suitable for a single reader and a single writer
 func NewRingBuffer(size int) *RingBuffer {
-	return &RingBuffer{
-		data: make([]byte, size),
-		lock: make(chan struct{}),
-		size: int32(size),
-	}
+  return &RingBuffer{
+    data: make([]byte, size),
+    lock: make(chan struct{}),
+    size: int32(size),
+  }
 }
 
+// WriteN writes the first n bytes from data to the buffer.  If buffer is full, WriteN
+// blocks until ReadN clears space
 func (r *RingBuffer) WriteN(data []byte, n int) {
-	var (
-		pos   = atomic.LoadInt32(&r.end)   // end of data
-		start = atomic.LoadInt32(&r.start) // start of data
-		wrote int                          // bytes written since last lock
-	)
+  var (
+    pos   = atomic.LoadInt32(&r.next)  // position next byte should be written
+    start = atomic.LoadInt32(&r.start) // start of data
+    wrote int                          // bytes written since last lock
+  )
 
-	for i := 0; i < n; i++ {
-		r.data[pos] = data[i]
-		pos++
-		if pos == r.size {
-			pos = 0
-		}
+  for i := 0; i < n; i++ {
+    r.data[pos] = data[i]
+    pos++
+    if pos == r.size {
+      pos = 0
+    }
 
-		// whenever pos catches up to the starting position, wait for
-		// additional bytes to be written before continuing
-		if pos == start {
-			// important to store pos prior to reading from lockMux
-			atomic.StoreInt32(&r.end, pos)
+    // whenever pos catches up to the starting position, wait for
+    // additional bytes to be written before continuing
+    if pos == start {
+      // important to store pos prior to reading from lockMux
+      atomic.StoreInt32(&r.next, pos)
 
-			// release the read goroutine if its locked on us
-			if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
-				wrote = i
-				<-r.lock
-			}
+      // release the read goroutine if its locked on us
+      if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
+        wrote = i
+        <-r.lock
+      }
 
-			// lock this goroutine and wait for the read goroutine to unlock us
-			if atomic.CompareAndSwapInt32(&r.lockState, 0, 1) {
-				r.lock <- struct{}{}
-				start = atomic.LoadInt32(&r.start)
-			}
-		}
-	}
+      // lock this goroutine and wait for the read goroutine to unlock us
+      if atomic.CompareAndSwapInt32(&r.lockState, 0, 1) {
+        r.lock <- struct{}{}
+        start = atomic.LoadInt32(&r.start)
+      }
+    }
+  }
 
-	atomic.StoreInt32(&r.end, pos)
+  atomic.StoreInt32(&r.next, pos)
 
-	// if at least one byte has been written since the last time r.lock
-	// was cleared, check to see if it needs to be cleared again
-	if n > wrote+1 {
-		if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
-			<-r.lock
-		}
-	}
+  // if at least one byte has been written since the last time r.lock
+  // was cleared, check to see if it needs to be cleared again
+  if n > wrote+1 {
+    if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
+      <-r.lock
+    }
+  }
 }
 
+// ReadN reads n bytes in the byte array provided.  If insufficient bytes
+// are available, blocks until WriteN refills the buffer.
 func (r *RingBuffer) ReadN(data []byte, n int) {
-	var (
-		pos  = atomic.LoadInt32(&r.start)
-		end  = atomic.LoadInt32(&r.end)
-		read = 0
-	)
+  var (
+    pos  = atomic.LoadInt32(&r.start)
+    next = atomic.LoadInt32(&r.next)
+    read = 0
+  )
 
-	for i := 0; i < n; i++ {
-		if pos == end {
-			if read > 0 {
-				atomic.StoreInt32(&r.start, pos)
-				if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
-					<-r.lock
-					read = 0
-				}
-			}
-			if atomic.CompareAndSwapInt32(&r.lockState, 0, 1) {
-				r.lock <- struct{}{}
-				end = atomic.LoadInt32(&r.end)
-			}
-		}
+  for i := 0; i < n; i++ {
+    if pos == next {
+      if read > 0 {
+        atomic.StoreInt32(&r.start, pos)
+        if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
+          <-r.lock
+          read = 0
+        }
+      }
+      if atomic.CompareAndSwapInt32(&r.lockState, 0, 1) {
+        r.lock <- struct{}{}
+        next = atomic.LoadInt32(&r.next)
+      }
+    }
 
-		data[i] = r.data[pos]
-		pos++
-		if pos == r.size {
-			pos = 0
-		}
-		read++
-	}
+    data[i] = r.data[pos]
+    pos++
+    if pos == r.size {
+      pos = 0
+    }
+    read++
+  }
 
-	atomic.StoreInt32(&r.start, pos)
-	if read > 0 {
-		if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
-			<-r.lock
-		}
-	}
+  atomic.StoreInt32(&r.start, pos)
+  if read > 0 {
+    if atomic.CompareAndSwapInt32(&r.lockState, 1, 0) {
+      <-r.lock
+    }
+  }
 }
