@@ -9,14 +9,10 @@ func (t {{ .Name }}) encode(e *encoder, version int) {
 {{- end }}
 {{- if .Type | isStructArray }}
   // {{ $f.Name }}
-  if t.{{ $f.Name }} == nil {
-    e.PutArrayLength(-1)
-  } else {
-  	length := len(t.{{ $f.Name }})
-    e.PutArrayLength(length)
-  	for i := 0 ; i < length ; i++ {
-      t.{{ $f.Name }}[i].encode(e, version)
-  	}
+  len{{ $i }} := len(t.{{ $f.Name }})
+  e.PutArrayLength(len{{ $i }})
+  for i := 0 ; i < len{{ $i }} ; i++ {
+    t.{{ $f.Name }}[i].encode(e, version)
   }
 {{- end }}
 {{- if .Type | isArray | not }}
