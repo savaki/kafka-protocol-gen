@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -125,6 +126,14 @@ func action(_ *cli.Context) error {
 		return err
 	}
 
+	sort.Slice(messages, func(i, j int) bool {
+		ii, jj := messages[i], messages[j]
+		if ii.ApiKey == jj.ApiKey {
+			return ii.Name < jj.Name
+		}
+		return ii.ApiKey < jj.ApiKey
+	})
+
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -176,9 +185,10 @@ func action(_ *cli.Context) error {
 					defer f.Close()
 
 					data := map[string]interface{}{
+						"Message":  message,
+						"Messages": messages,
 						"Module":   opts.module,
 						"Package":  filepath.Base(opts.module),
-						"Message":  message,
 						"Versions": versions,
 					}
 
@@ -217,8 +227,9 @@ func action(_ *cli.Context) error {
 				defer f.Close()
 
 				data := map[string]interface{}{
-					"Module":  opts.module,
-					"Package": filepath.Base(opts.module),
+					"Messages": messages,
+					"Module":   opts.module,
+					"Package":  filepath.Base(opts.module),
 				}
 
 				if err := t.Execute(f, data); err != nil {
@@ -248,44 +259,29 @@ type VersionFields struct {
 }
 
 var funcMap = template.FuncMap{
+	"baseName":         baseName,
 	"baseType":         baseType,
 	"capitalize":       capitalize,
 	"findStructs":      findStructs,
 	"findStructFields": findStructFields,
-	"forVersion": func(versions protocol.ValidVersions, fields []protocol.Field) []protocol.Field {
-		var valid []protocol.Field
-
-	loop:
-		for _, f := range fields {
-			field := f
-			for version := versions.From; version <= versions.To; version++ {
-				if f.Versions.IsValid(version) {
-					valid = append(valid, field)
-					continue loop
-				}
-			}
-		}
-		return valid
-	},
+	"forVersion":       forVersion,
 	"goType":           goType,
 	"isArray":          isArray,
 	"isBytes":          isBytes,
 	"isPartialOverlap": isPartialOverlap,
 	"isPrimitiveArray": isPrimitiveArray,
+	"isRequest":        isRequest,
 	"isString":         isString,
 	"isStructArray":    isStructArray,
-	"structName": func(a string) string {
-		return strings.ReplaceAll(a, "[]", "")
-	},
-	"toVersionFields": func(versions protocol.ValidVersions, message protocol.Message) VersionFields {
-		return VersionFields{
-			ApiKey:   message.ApiKey,
-			Fields:   message.Fields,
-			Name:     message.Name,
-			Versions: versions,
-		}
-	},
-	"type": func(v string) string { return strings.ReplaceAll(v, "[]", "") },
+	"structName":       structName,
+	"toVersionFields":  toVersionFields,
+	"type":             func(v string) string { return strings.ReplaceAll(v, "[]", "") },
+}
+
+var reRequestResponse = regexp.MustCompile(`(Request|Response)$`)
+
+func baseName(v string) string {
+	return reRequestResponse.ReplaceAllString(v, "")
 }
 
 func baseType(v string) string {
@@ -333,12 +329,29 @@ func isPrimitiveArray(t string) bool {
 	return t == "[]string" || t == "[]int32" || t == "[]int64"
 }
 
+func isRequest(t string) bool {
+	return strings.HasSuffix(t, "Request")
+}
+
 func isString(t string) bool {
 	return t == "string"
 }
 
 func isStructArray(t string) bool {
 	return isArray(t) && !isPrimitiveArray(t)
+}
+
+func structName(a string) string {
+	return strings.ReplaceAll(a, "[]", "")
+}
+
+func toVersionFields(versions protocol.ValidVersions, message protocol.Message) VersionFields {
+	return VersionFields{
+		ApiKey:   message.ApiKey,
+		Fields:   message.Fields,
+		Name:     message.Name,
+		Versions: versions,
+	}
 }
 
 var re = regexp.MustCompile(`^[^A-Za-z0-9]*([A-Z0-9]*)([a-z0-9]*)`)
@@ -425,6 +438,22 @@ func findStructFields(apiKey int, versions protocol.ValidVersions, fields []prot
 		structFields = append(structFields, findStructFields(apiKey, versions, f.Fields)...)
 	}
 	return structFields
+}
+
+func forVersion(versions protocol.ValidVersions, fields []protocol.Field) []protocol.Field {
+	var valid []protocol.Field
+
+loop:
+	for _, f := range fields {
+		field := f
+		for version := versions.From; version <= versions.To; version++ {
+			if f.Versions.IsValid(version) {
+				valid = append(valid, field)
+				continue loop
+			}
+		}
+	}
+	return valid
 }
 
 func findStructs(apiKey int, versions protocol.ValidVersions, message protocol.Message) []VersionFields {
