@@ -52,6 +52,7 @@ func newDecoder(raw []byte, length int) *decoder {
 // to length
 func (d *decoder) Reset(length int) {
   d.length = length
+  d.offset = 0
 }
 
 // remains ensures that the buffer contains at least n more bytes

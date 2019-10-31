@@ -34,6 +34,7 @@ type connection struct {
   err         error
   id          int32
   raw         net.Conn
+  rb          *ringBuffer
 
   writeLock sync.Mutex
   readLock  sync.Mutex
@@ -65,6 +66,7 @@ func connect(addr string, config config) (*connection, error) {
     doneRead:    make(chan struct{}),
     encoder:     e,
     raw:         raw,
+    rb:          rb,
     requests:    map[int32]request{},
   }
   go c.readLoop(ctx, rb, raw)
@@ -159,6 +161,8 @@ func (c *connection) write(encode encodeFunc, decode decodeFunc) error {
 
 func (c *connection) Close() error {
   c.cancel()
+  c.rb.Close()
+  c.raw.Close()
   <-c.doneMessage
   <-c.doneRead
   return c.err

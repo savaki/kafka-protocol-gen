@@ -63,6 +63,11 @@ func NewBroker(addr string, opts ...Option) (*Broker, error) {
   }, nil
 }
 
+// Close the connection to the broker
+func (b *Broker) Close() error {
+	return b.conn.Close()
+}
+
 {{- range .Messages }}
 {{- if .Name | isRequest }}
 
@@ -78,6 +83,8 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
         CorrelationId:     correlationID,
         ClientId:          b.config.clientID,
       }
+      size := hdr.size(2) + req.size(0)
+      e.PutInt32(size)
       hdr.encode(e, 2)
       req.encode(e, 0)
     },
