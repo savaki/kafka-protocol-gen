@@ -78,7 +78,7 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
   	// encode request
     func(e *encoder, correlationID int32) {
       hdr := RequestHeader{
-        RequestApiKey:     {{ .ApiKey }},
+        RequestApiKey:     key{{ .Name | baseName }},
         RequestApiVersion: 0,
         CorrelationId:     correlationID,
         ClientId:          b.config.clientID,
