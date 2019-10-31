@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-func Testencoder_err(t *testing.T) {
+func TestEncoder_err(t *testing.T) {
 	var (
 		buf     = bytes.NewBuffer(nil)
 		wantErr = io.EOF
