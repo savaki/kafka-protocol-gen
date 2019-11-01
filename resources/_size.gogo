@@ -1,5 +1,5 @@
 // size of {{ .Name }}; Versions: {{ .Versions }}
-func (t {{ .Name }}) size(version int) int32 {
+func (t {{ .Name }}) size(version int16) int32 {
   var sz int32
 {{- range $i, $f := .Fields | forVersion .Versions }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}

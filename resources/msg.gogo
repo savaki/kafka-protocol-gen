@@ -16,6 +16,8 @@
 
 package {{ .Package }}
 
+import "fmt"
+
 const (
 {{- range .Messages }}
 {{- if .Name | isRequest }}
@@ -23,3 +25,46 @@ const (
 {{- end }}
 {{- end }}
 )
+
+// apiVersion contains the negotiated versions for each api key
+type apiVersion struct {
+{{- range .Messages }}
+{{- if .Name | isRequest }}
+  {{ .Name | baseName }} int16
+{{- end }}
+{{- end }}
+}
+
+// negotiateApiVersions accepts the apiKeys from the broker and negotiates
+// acceptable versions for each api based on the versions supported by
+// this library.
+func negotiateApiVersions(apiKeys []ApiVersionsResponseKey18) (apiVersion, error) {
+	// Since this file is generated, there's no need to externalize the supported
+	// versions elsewhere.  We can simply inline the values into the call to matchVersion
+	var av apiVersion
+	var err error
+	for _, apiKey := range apiKeys {
+		switch apiKey.ApiKey {
+{{- range .Messages }}
+{{- if .Name | isRequest }}
+    case key{{ .Name | baseName }}:
+      av.{{ .Name | baseName }}, err = matchVersion(apiKey, {{ .ValidVersions.From }}, {{ .ValidVersions.To }})
+    	if err != nil {
+    		return apiVersion{}, err
+      }
+{{- end }}
+{{- end }}
+    }
+  }
+  return av, nil
+}
+
+// matchVersion determines which version of the api to use
+func matchVersion(apiKey ApiVersionsResponseKey18, minVersion, maxVersion int16) (int16, error) {
+	for version := apiKey.MaxVersion; version >= apiKey.MinVersion; version-- {
+    if version := apiKey.MaxVersion; version >= minVersion && version <= maxVersion {
+      return version, nil
+    }
+  }
+  return 0, fmt.Errorf("unable to negotiate version for api key, %v", apiKey.ApiKey)
+}

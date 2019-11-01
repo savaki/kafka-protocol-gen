@@ -17,6 +17,7 @@
 package {{ .Package }}
 
 import (
+  "fmt"
   "net"
 )
 
@@ -28,8 +29,9 @@ type config struct {
 
 // Client provides access to Kafka
 type Broker struct {
-  config config
-  conn   *connection
+  apiVersion apiVersion
+  config     config
+  conn       *connection
 }
 
 // Option provides functional options to Client
@@ -57,10 +59,24 @@ func NewBroker(addr string, opts ...Option) (*Broker, error) {
   	return nil, err
   }
 
-  return &Broker{
+  broker := &Broker{
     config: config,
     conn:   conn,
-  }, nil
+  }
+
+  // negotiate usable api versions prior to returning broker
+  //
+  resp, err := broker.ApiVersions(ApiVersionsRequest{})
+  if err != nil {
+  	return nil, fmt.Errorf("unable to create broker: %w", err)
+  }
+  apiVersion, err := negotiateApiVersions(resp.ApiKeys)
+  if err != nil {
+    return nil, fmt.Errorf("unable to create broker: %w", err)
+  }
+  broker.apiVersion = apiVersion
+
+  return broker, nil
 }
 
 // Close the connection to the broker
@@ -79,18 +95,18 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
     func(e *encoder, correlationID int32) {
       hdr := RequestHeader{
         RequestApiKey:     key{{ .Name | baseName }},
-        RequestApiVersion: 0,
+        RequestApiVersion: b.apiVersion.{{ .Name | baseName }},
         CorrelationId:     correlationID,
         ClientId:          b.config.clientID,
       }
-      size := hdr.size(2) + req.size(0)
+      size := hdr.size(2) + req.size(b.apiVersion.{{ .Name | baseName }})
       e.PutInt32(size)
       hdr.encode(e, 2)
-      req.encode(e, 0)
+      req.encode(e, b.apiVersion.{{ .Name | baseName }})
     },
     // decode response
     func(d *decoder) error {
-      return (&resp).decode(d, 0)
+      return (&resp).decode(d, b.apiVersion.{{ .Name | baseName }})
     },
   )
   return resp, err
