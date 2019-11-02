@@ -85,7 +85,7 @@ func TestVersions_UnmarshalJSON(t *testing.T) {
 func TestVersions_IsValid(t *testing.T) {
 	testCases := map[string]struct {
 		Versions Versions
-		Version  int
+		Version  int16
 		Want     bool
 	}{
 		"scalar": {
