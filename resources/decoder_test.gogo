@@ -400,7 +400,7 @@ func TestDecoder_PutNullableString(t *testing.T) {
       want: &blank,
     },
     "nil": {
-      want: nil,
+      want: &blank,
     },
     "some": {
       want: &some,
