@@ -155,7 +155,7 @@ func action(_ *cli.Context) error {
 			for _, message := range messages {
 				versions := protocol.ValidVersions{To: message.ValidVersions.To}
 				if opts.last > 0 {
-					if from := message.ValidVersions.To - opts.last + 1; from > 0 {
+					if from := message.ValidVersions.To - int16(opts.last) + 1; from > 0 {
 						versions.From = from
 					}
 				}
@@ -268,6 +268,7 @@ var funcMap = template.FuncMap{
 	"goType":           goType,
 	"isArray":          isArray,
 	"isBytes":          isBytes,
+	"isNullable":       isNullable,
 	"isPartialOverlap": isPartialOverlap,
 	"isPrimitiveArray": isPrimitiveArray,
 	"isRequest":        isRequest,
@@ -313,8 +314,12 @@ func isBytes(t string) bool {
 	return t == "bytes"
 }
 
+func isNullable(field protocol.Field, version int16) bool {
+	return true
+}
+
 func isPartialOverlap(valid protocol.ValidVersions, versions protocol.Versions) bool {
-	var matches int
+	var matches int16
 	for version := valid.From; version <= valid.To; version++ {
 		if versions.IsValid(version) {
 			matches++

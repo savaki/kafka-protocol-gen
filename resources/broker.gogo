@@ -51,8 +51,8 @@ func buildConfig(opts []Option) config {
   return c
 }
 
-// NewBroker NewBroker a new Kafka client
-func NewBroker(addr string, opts ...Option) (*Broker, error) {
+// New a new Kafka Broker
+func New(addr string, opts ...Option) (*Broker, error) {
   config := buildConfig(opts)
   conn, err := connect(addr, config)
   if err != nil {
@@ -114,7 +114,11 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
 {{- end }}
 {{- end }}
 
+// Message defines the standard consumer and producer message
 type Message struct {
+  Topic string
+  Key   []byte
+  Value []byte
 }
 
 type MessageHandler func(*Message) error

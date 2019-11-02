@@ -36,15 +36,15 @@ type Message struct {
 
 // ValidVersions parses the valid versions string into its semantic values
 type ValidVersions struct {
-	From int
-	To   int
+	From int16
+	To   int16
 }
 
 func (v ValidVersions) String() string {
 	if v.From == v.To {
-		return strconv.Itoa(v.From)
+		return strconv.Itoa(int(v.From))
 	}
-	return strconv.Itoa(v.From) + "-" + strconv.Itoa(v.To)
+	return strconv.Itoa(int(v.From)) + "-" + strconv.Itoa(int(v.To))
 }
 
 // UnmarshalJSON implements json.Unmarshaler
@@ -69,8 +69,8 @@ func (v *ValidVersions) UnmarshalJSON(data []byte) error {
 	}
 
 	*v = ValidVersions{
-		From: from,
-		To:   to,
+		From: int16(from),
+		To:   int16(to),
 	}
 
 	return nil
@@ -78,12 +78,12 @@ func (v *ValidVersions) UnmarshalJSON(data []byte) error {
 
 // Versions provides a semantic interpretation of the versions field
 type Versions struct {
-	From        int  // From version
-	To          int  // To contains max supported version; UpToCurrent takes precedence over To
-	UpToCurrent bool // Versions up to current are supported
+	From        int16 // From version
+	To          int16 // To contains max supported version; UpToCurrent takes precedence over To
+	UpToCurrent bool  // Versions up to current are supported
 }
 
-func (v Versions) IsValid(version int) bool {
+func (v Versions) IsValid(version int16) bool {
 	return version >= v.From && ((!v.UpToCurrent && version <= v.To) || v.UpToCurrent)
 }
 
@@ -98,9 +98,9 @@ func (v Versions) IsValidVersions(versions ValidVersions) bool {
 
 func (v Versions) String() string {
 	if v.UpToCurrent {
-		return strconv.Itoa(v.From) + "+"
+		return strconv.Itoa(int(v.From)) + "+"
 	}
-	return strconv.Itoa(v.From) + "-" + strconv.Itoa(v.To)
+	return strconv.Itoa(int(v.From)) + "-" + strconv.Itoa(int(v.To))
 }
 
 // UnmarshalJSON implements json.Unmarshaler
@@ -127,8 +127,8 @@ func (v *Versions) UnmarshalJSON(data []byte) error {
 	upToCurrent := string(match[2]) == "+"
 
 	*v = Versions{
-		From:        from,
-		To:          to,
+		From:        int16(from),
+		To:          int16(to),
 		UpToCurrent: upToCurrent,
 	}
 
