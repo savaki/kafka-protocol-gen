@@ -103,12 +103,12 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
       }
       size := hdr.size(2) + req.size(b.apiVersion.{{ .Name | baseName }})
       e.PutInt32(size)
-      hdr.encode(e, 2)
-      req.encode(e, b.apiVersion.{{ .Name | baseName }})
+      hdr.Encode(e, 2)
+      req.Encode(e, b.apiVersion.{{ .Name | baseName }})
     },
     // decode response
     func(d *protocol.Decoder) error {
-      return (&resp).decode(d, b.apiVersion.{{ .Name | baseName }})
+      return (&resp).Decode(d, b.apiVersion.{{ .Name | baseName }})
     },
   )
   return resp, err

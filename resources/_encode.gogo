@@ -1,5 +1,5 @@
 // encode {{ .Name }}; Versions: {{ .Versions }}
-func (t {{ .Name }}) encode(e *protocol.Encoder, version int16) {
+func (t {{ .Name }}) Encode(e *protocol.Encoder, version int16) {
 {{- range $i, $f := .Fields | forVersion .Versions }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}
   if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {
@@ -12,7 +12,7 @@ func (t {{ .Name }}) encode(e *protocol.Encoder, version int16) {
   len{{ $i }} := len(t.{{ $f.Name }})
   e.PutArrayLength(len{{ $i }})
   for i := 0 ; i < len{{ $i }} ; i++ {
-    t.{{ $f.Name }}[i].encode(e, version)
+    t.{{ $f.Name }}[i].Encode(e, version)
   }
 {{- end }}
 {{- if .Type | isArray | not }}
