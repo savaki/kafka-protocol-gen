@@ -266,6 +266,7 @@ var funcMap = template.FuncMap{
 	"findStructFields": findStructFields,
 	"forVersion":       forVersion,
 	"goType":           goType,
+	"hasFields":        hasFields,
 	"isArray":          isArray,
 	"isBytes":          isBytes,
 	"isNullable":       isNullable,
@@ -304,6 +305,10 @@ func goType(t string) string {
 	default:
 		return t
 	}
+}
+
+func hasFields(fields []protocol.Field) bool {
+	return len(fields) > 0
 }
 
 func isArray(t string) bool {

@@ -1,5 +1,5 @@
 // encode {{ .Name }}; Versions: {{ .Versions }}
-func (t {{ .Name }}) encode(e *encoder, version int16) {
+func (t {{ .Name }}) encode(e *protocol.Encoder, version int16) {
 {{- range $i, $f := .Fields | forVersion .Versions }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}
   if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {

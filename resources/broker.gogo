@@ -19,6 +19,8 @@ package {{ .Package }}
 import (
   "fmt"
   "net"
+
+  "{{ .Module }}/protocol"
 )
 
 type config struct {
@@ -31,7 +33,7 @@ type config struct {
 type Broker struct {
   apiVersion apiVersion
   config     config
-  conn       *connection
+  conn       *protocol.Conn
 }
 
 // Option provides functional options to Client
@@ -54,7 +56,7 @@ func buildConfig(opts []Option) config {
 // New a new Kafka Broker
 func New(addr string, opts ...Option) (*Broker, error) {
   config := buildConfig(opts)
-  conn, err := connect(addr, config)
+  conn, err := protocol.Connect(addr)
   if err != nil {
   	return nil, err
   }
@@ -90,9 +92,9 @@ func (b *Broker) Close() error {
 // {{ .Name | baseName }} (apiKey: {{ .ApiKey }})
 func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}Response, error) {
   var resp {{ .Name | baseName }}Response
-  err := b.conn.write(
+  err := b.conn.Write(
   	// encode request
-    func(e *encoder, correlationID int32) {
+    func(e *protocol.Encoder, correlationID int32) {
       hdr := RequestHeader{
         RequestApiKey:     key{{ .Name | baseName }},
         RequestApiVersion: b.apiVersion.{{ .Name | baseName }},
@@ -105,7 +107,7 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
       req.encode(e, b.apiVersion.{{ .Name | baseName }})
     },
     // decode response
-    func(d *decoder) error {
+    func(d *protocol.Decoder) error {
       return (&resp).decode(d, b.apiVersion.{{ .Name | baseName }})
     },
   )

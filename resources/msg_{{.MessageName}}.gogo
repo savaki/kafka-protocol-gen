@@ -16,6 +16,13 @@
 
 package {{ .Package }}
 
+import (
+	"{{ .Module }}/protocol"
+{{- if .Message.Fields | hasFields }}
+	"{{ .Module }}/sizeof"
+{{- end }}
+)
+
 // {{ .Message.Name }}; ApiKey: {{ .Message.ApiKey}}, Versions: {{ .Versions }}
 type {{ .Message.Name }} struct {
 {{- range .Message.Fields | forVersion $.Versions }}

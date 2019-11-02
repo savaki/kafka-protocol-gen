@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package {{ .Package }}
+package protocol
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ func TestEncoder_err(t *testing.T) {
 	var (
 		buf     = bytes.NewBuffer(nil)
 		wantErr = io.EOF
-		e = encoder{
+		e       = Encoder{
 			target: buf,
 			err:    wantErr,
 		}

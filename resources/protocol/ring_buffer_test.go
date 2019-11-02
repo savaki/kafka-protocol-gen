@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package {{ .Package }}
+package protocol
 
 import (
 	"context"
@@ -25,8 +25,8 @@ import (
 	"time"
 )
 
-func TestringBuffer_WriteN(t *testing.T) {
-	ring := ringBuffer{
+func TestRingBuffer_WriteN(t *testing.T) {
+	ring := RingBuffer{
 		data: make([]byte, 15),
 	}
 
@@ -45,11 +45,11 @@ func BenchmarkAtomic(t *testing.B) {
 	}
 }
 
-func Test_newringBuffer(t *testing.T) {
+func Test_newRingBuffer(t *testing.T) {
 	var (
 		n       = int(1e4)
 		content = make([]byte, n)
-		buffer  = newRingBuffer(1e6)
+		buffer  = NewRingBuffer(1e6)
 		counter int
 	)
 
@@ -89,11 +89,11 @@ func Test_newringBuffer(t *testing.T) {
 	fmt.Println(counter)
 }
 
-func BenchmarkringBuffer(t *testing.B) {
+func BenchmarkRingBuffer(t *testing.B) {
 	var (
 		n      = int(1e3)
 		buffer = make([]byte, n)
-		rb     = newRingBuffer(1e6)
+		rb     = NewRingBuffer(1e6)
 	)
 
 	for i := 0; i < t.N; i++ {

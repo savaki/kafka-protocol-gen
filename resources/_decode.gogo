@@ -1,5 +1,5 @@
 // decode {{ .Name }}; Versions: {{ .Versions }}
-func (t *{{ .Name }}) decode(d *decoder, version int16) error {
+func (t *{{ .Name }}) decode(d *protocol.Decoder, version int16) error {
   var err error
 {{- range $i, $f := .Fields | forVersion .Versions }}
 

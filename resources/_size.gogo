@@ -6,22 +6,22 @@ func (t {{ .Name }}) size(version int16) int32 {
   if version >= {{ $f.Versions.From }}{{ if $f.Versions.UpToCurrent | not }} && version <= {{ $f.Versions.To }}{{ end }} {
 {{- end }}
 {{- if .Type | isPrimitiveArray }}
-  sz += sz{{ $f.Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
+  sz += sizeof.{{ $f.Type | baseType | capitalize }}Array(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
 {{- if .Type | isStructArray }}
-  sz += szArrayLength // {{ $f.Name }}
+  sz += sizeof.ArrayLength // {{ $f.Name }}
   for i := len(t.{{ $f.Name }}) - 1 ; i >= 0 ; i-- {
     sz += t.{{ $f.Name }}[i].size(version)
   }
 {{- end }}
 {{- if .Type | isBytes }}
-  sz += szBytes(t.{{ $f.Name }}) // {{ $f.Name }}
+  sz += sizeof.Bytes(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
 {{- if .Type | isString }}
-  sz += szString(t.{{ $f.Name }}) // {{ $f.Name }}
+  sz += sizeof.String(t.{{ $f.Name }}) // {{ $f.Name }}
 {{- end }}
 {{- if and (.Type | isArray | not) (.Type | isString | not) (.Type | isBytes | not) }}
-  sz += sz{{ .Type | capitalize }} // {{ $f.Name }}
+  sz += sizeof.{{ .Type | capitalize }} // {{ $f.Name }}
 {{- end }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}
   }
