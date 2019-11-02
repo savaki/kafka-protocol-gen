@@ -16,14 +16,10 @@
 
 package {{ .Package }}
 
-import "fmt"
+import (
+  "fmt"
 
-const (
-{{- range .Messages }}
-{{- if .Name | isRequest }}
-  key{{ .Name | baseName }} = {{ .ApiKey }}
-{{- end }}
-{{- end }}
+  "{{ .Module }}/protocol/apikey"
 )
 
 // apiVersion contains the negotiated versions for each api key
@@ -47,7 +43,7 @@ func negotiateApiVersions(apiKeys []ApiVersionsResponseKey18) (apiVersion, error
 		switch apiKey.ApiKey {
 {{- range .Messages }}
 {{- if .Name | isRequest }}
-    case key{{ .Name | baseName }}:
+    case apikey.{{ .Name | baseName }}:
       av.{{ .Name | baseName }}, err = matchVersion(apiKey, {{ .ValidVersions.From }}, {{ .ValidVersions.To }})
     	if err != nil {
     		return apiVersion{}, err

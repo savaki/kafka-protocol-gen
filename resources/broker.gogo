@@ -21,6 +21,7 @@ import (
   "net"
 
   "{{ .Module }}/protocol"
+  "{{ .Module }}/protocol/apikey"
 )
 
 type config struct {
@@ -96,7 +97,7 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
   	// encode request
     func(e *protocol.Encoder, correlationID int32) {
       hdr := RequestHeader{
-        RequestApiKey:     key{{ .Name | baseName }},
+        RequestApiKey:     apikey.{{ .Name | baseName }},
         RequestApiVersion: b.apiVersion.{{ .Name | baseName }},
         CorrelationId:     correlationID,
         ClientId:          b.config.clientID,
