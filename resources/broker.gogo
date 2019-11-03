@@ -21,8 +21,9 @@ import (
   "net"
 
   "{{ .Module }}/protocol"
-  "{{ .Module }}/protocol/apikey"
 )
+
+const defaultClientID = "{{ .Module }}"
 
 type config struct {
   brokers  []string
@@ -40,12 +41,23 @@ type Broker struct {
 // Option provides functional options to Client
 type Option func(*config)
 
+// WithClientID allows kafka client id to be specified
+func WithClientID(id string) Option {
+  return func(c *config) {
+    if id == "" {
+    	c.clientID = defaultClientID
+    	return
+    }
+    c.clientID = id
+  }
+}
+
 // buildConfig builds config from provided options
 func buildConfig(opts []Option) config {
   c := config{
-  	clientID: "{{ .Module }}",
-  	dialFunc: net.Dial,
-	}
+    clientID: defaultClientID,
+    dialFunc: net.Dial,
+  }
 
   for _, opt := range opts {
     opt(&c)
