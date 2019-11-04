@@ -21,6 +21,7 @@ import (
   "net"
 
   "{{ .Module }}/protocol"
+  "{{ .Module }}/protocol/apikey"
 )
 
 const defaultClientID = "{{ .Module }}"
