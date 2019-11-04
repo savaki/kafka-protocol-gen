@@ -115,7 +115,7 @@ func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}
         CorrelationId:     correlationID,
         ClientId:          b.config.clientID,
       }
-      size := hdr.size(2) + req.size(b.apiVersion.{{ .Name | baseName }})
+      size := hdr.Size(2) + req.Size(b.apiVersion.{{ .Name | baseName }})
       e.PutInt32(size)
       hdr.Encode(e, 2)
       req.Encode(e, b.apiVersion.{{ .Name | baseName }})

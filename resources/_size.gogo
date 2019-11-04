@@ -1,5 +1,5 @@
 // size of {{ .Name }}; Versions: {{ .Versions }}
-func (t {{ .Name }}) size(version int16) int32 {
+func (t {{ .Name }}) Size(version int16) int32 {
   var sz int32
 {{- range $i, $f := .Fields | forVersion .Versions }}
 {{- if (isPartialOverlap $.Versions $f.Versions) }}
@@ -11,7 +11,7 @@ func (t {{ .Name }}) size(version int16) int32 {
 {{- if .Type | isStructArray }}
   sz += sizeof.ArrayLength // {{ $f.Name }}
   for i := len(t.{{ $f.Name }}) - 1 ; i >= 0 ; i-- {
-    sz += t.{{ $f.Name }}[i].size(version)
+    sz += t.{{ $f.Name }}[i].Size(version)
   }
 {{- end }}
 {{- if .Type | isBytes }}
