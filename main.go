@@ -227,6 +227,7 @@ func action(_ *cli.Context) error {
 				defer f.Close()
 
 				data := map[string]interface{}{
+					"Last":     opts.last,
 					"Messages": messages,
 					"Module":   opts.module,
 					"Package":  filepath.Base(opts.module),
@@ -278,6 +279,7 @@ var funcMap = template.FuncMap{
 	"structName":       structName,
 	"toVersionFields":  toVersionFields,
 	"type":             func(v string) string { return strings.ReplaceAll(v, "[]", "") },
+	"validVersions":    validVersions,
 }
 
 var reRequestResponse = regexp.MustCompile(`(Request|Response)$`)
@@ -353,6 +355,16 @@ func isStructArray(t string) bool {
 
 func structName(a string) string {
 	return strings.ReplaceAll(a, "[]", "")
+}
+
+func validVersions(message protocol.Message, last int) protocol.ValidVersions {
+	versions := protocol.ValidVersions{To: message.ValidVersions.To}
+	if last > 0 {
+		if from := message.ValidVersions.To - int16(last) + 1; from > 0 {
+			versions.From = from
+		}
+	}
+	return versions
 }
 
 func toVersionFields(versions protocol.ValidVersions, message protocol.Message) VersionFields {
