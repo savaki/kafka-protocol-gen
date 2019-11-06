@@ -26,7 +26,7 @@ import (
 	"sync/atomic"
 
 	"{{ .Module }}/message"
-	"{{ .Module }}/protocol"
+	"{{ .Module }}/ring"
 )
 
 type Conn struct {
@@ -38,7 +38,7 @@ type Conn struct {
 	err         error
 	id          int32
 	raw         net.Conn
-	rb          *protocol.RingBuffer
+	rb          *ring.Buffer
 
 	writeLock sync.Mutex
 	readLock  sync.Mutex
@@ -68,7 +68,7 @@ func Connect(addr string, opts ...Option) (*Conn, error) {
 
 	var (
 		ctx, cancel = context.WithCancel(context.Background())
-		rb          = protocol.NewRingBuffer(5e6)
+		rb          = ring.New(5e6)
 		ch          = make(chan request, 32)
 		e           = message.NewEncoder(bufio.NewWriter(raw))
 	)
@@ -89,7 +89,7 @@ func Connect(addr string, opts ...Option) (*Conn, error) {
 	return c, nil
 }
 
-func (c *Conn) readLoop(ctx context.Context, rb *protocol.RingBuffer, raw net.Conn) {
+func (c *Conn) readLoop(ctx context.Context, rb *ring.Buffer, raw net.Conn) {
 	defer close(c.doneRead)
 
 	buffer := make([]byte, 2e6) // 2MB
@@ -104,7 +104,7 @@ func (c *Conn) readLoop(ctx context.Context, rb *protocol.RingBuffer, raw net.Co
 	}
 }
 
-func (c *Conn) messageLoop(ctx context.Context, rb *protocol.RingBuffer, ch <-chan request) {
+func (c *Conn) messageLoop(ctx context.Context, rb *ring.Buffer, ch <-chan request) {
 	defer close(c.doneMessage)
 
 	var (
