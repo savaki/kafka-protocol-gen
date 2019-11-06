@@ -25,6 +25,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"{{ .Module }}/message"
 	"{{ .Module }}/protocol"
 )
 
@@ -33,7 +34,7 @@ type Conn struct {
 	ch          chan request
 	doneMessage chan struct{}
 	doneRead    chan struct{}
-	encoder     *protocol.Encoder
+	encoder     *message.Encoder
 	err         error
 	id          int32
 	raw         net.Conn
@@ -45,7 +46,7 @@ type Conn struct {
 }
 
 type request struct {
-	decode func(*protocol.Decoder) error
+	decode func(*message.Decoder) error
 	reply  chan error
 }
 
@@ -69,7 +70,7 @@ func Connect(addr string, opts ...Option) (*Conn, error) {
 		ctx, cancel = context.WithCancel(context.Background())
 		rb          = protocol.NewRingBuffer(5e6)
 		ch          = make(chan request, 32)
-		e           = protocol.NewEncoder(bufio.NewWriter(raw))
+		e           = message.NewEncoder(bufio.NewWriter(raw))
 	)
 
 	c := &Conn{
@@ -108,7 +109,7 @@ func (c *Conn) messageLoop(ctx context.Context, rb *protocol.RingBuffer, ch <-ch
 
 	var (
 		buffer = make([]byte, 2e6) // 2MB
-		d      = protocol.NewDecoder(buffer, len(buffer))
+		d      = message.NewDecoder(buffer, len(buffer))
 	)
 
 	for {
@@ -129,7 +130,7 @@ func (c *Conn) messageLoop(ctx context.Context, rb *protocol.RingBuffer, ch <-ch
 		rb.ReadN(buffer, size)
 		d.Reset(size)
 
-		var resp ResponseHeader
+		var resp message.ResponseHeader
 		if err := (&resp).Decode(d, 1); err != nil {
 			fmt.Println(err)
 			continue
@@ -146,8 +147,8 @@ func (c *Conn) messageLoop(ctx context.Context, rb *protocol.RingBuffer, ch <-ch
 	}
 }
 
-type EncodeFunc func(e *protocol.Encoder, correlationID int32)
-type DecodeFunc func(d *protocol.Decoder) error
+type EncodeFunc func(e *message.Encoder, correlationID int32)
+type DecodeFunc func(d *message.Decoder) error
 
 func (c *Conn) Do(encode EncodeFunc, decode DecodeFunc) error {
 	correlationID := atomic.AddInt32(&c.id, 1)
