@@ -17,7 +17,7 @@
 package message
 
 import (
-	"{{ .Module }}/sizeof"
+	"{{ .Module }}/message/sizeof"
 )
 
 {{- range .Messages }}
