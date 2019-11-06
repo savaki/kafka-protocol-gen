@@ -19,7 +19,6 @@ package {{ .Package }}
 import (
   "fmt"
 
-  "{{ .Module }}/apikey"
   "{{ .Module }}/message"
 )
 
@@ -73,7 +72,7 @@ func (b *Broker) {{ .Name | baseName }}(req message.{{ .Name }}) (message.{{ .Na
   	// encode request
     func(e *message.Encoder, correlationID int32) {
       hdr := message.RequestHeader{
-        RequestApiKey:     apikey.{{ .Name | baseName }},
+        RequestApiKey:     message.Key{{ .Name | baseName }},
         RequestApiVersion: b.apiVersion.{{ .Name | baseName }},
         CorrelationId:     correlationID,
         ClientId:          b.config.clientID,
@@ -130,7 +129,7 @@ func negotiateApiVersions(apiKeys []message.ApiVersionsResponseKey18) (apiVersio
     switch apiKey.ApiKey {
     {{- range .Messages }}
     {{- if .Name | isRequest }}
-    case apikey.{{ .Name | baseName }}:
+    case message.Key{{ .Name | baseName }}:
       av.{{ .Name | baseName }}, err = matchVersion(apiKey, {{ .ValidVersions.From }}, {{ .ValidVersions.To }})
       if err != nil {
         return apiVersion{}, err
