@@ -18,59 +18,22 @@ package {{ .Package }}
 
 import (
   "fmt"
-  "net"
 
+  "{{ .Module }}/apikey"
   "{{ .Module }}/protocol"
-  "{{ .Module }}/protocol/apikey"
 )
-
-const defaultClientID = "{{ .Module }}"
-
-type config struct {
-  brokers  []string
-  clientID string
-  dialFunc func(network, addr string) (net.Conn, error)
-}
 
 // Client provides access to Kafka
 type Broker struct {
   apiVersion apiVersion
   config     config
-  conn       *protocol.Conn
-}
-
-// Option provides functional options to Client
-type Option func(*config)
-
-// WithClientID allows kafka client id to be specified
-func WithClientID(id string) Option {
-  return func(c *config) {
-    if id == "" {
-    	c.clientID = defaultClientID
-    	return
-    }
-    c.clientID = id
-  }
-}
-
-// buildConfig builds config from provided options
-func buildConfig(opts []Option) config {
-  c := config{
-    clientID: defaultClientID,
-    dialFunc: net.Dial,
-  }
-
-  for _, opt := range opts {
-    opt(&c)
-  }
-
-  return c
+  conn       *Conn
 }
 
 // NewBroker a new Kafka Broker
 func NewBroker(addr string, opts ...Option) (*Broker, error) {
   config := buildConfig(opts)
-  conn, err := protocol.Connect(addr)
+  conn, err := Connect(addr, opts...)
   if err != nil {
   	return nil, err
   }
@@ -106,7 +69,7 @@ func (b *Broker) Close() error {
 // {{ .Name | baseName }} (apiKey: {{ .ApiKey }})
 func (b *Broker) {{ .Name | baseName }}(req {{ .Name }}) ({{ .Name | baseName }}Response, error) {
   var resp {{ .Name | baseName }}Response
-  err := b.conn.Write(
+  err := b.conn.Do(
   	// encode request
     func(e *protocol.Encoder, correlationID int32) {
       hdr := RequestHeader{

@@ -19,8 +19,8 @@ package {{ .Package }}
 import (
 	"fmt"
 
+  "{{ .Module }}/apikey"
 	"{{ .Module }}/protocol"
-  "{{ .Module }}/protocol/apikey"
 	"{{ .Module }}/sizeof"
 )
 
