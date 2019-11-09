@@ -26,10 +26,16 @@ import (
 )
 
 func TestBuffer_WriteN(t *testing.T) {
-	ring := New(15)
-	content := []byte("hello world")
+	var (
+		ring    = New(15)
+		content = []byte("hello world")
+		length  = len(content)
+	)
+
 	ring.WriteN(content, len(content))
-	fmt.Println(string(ring.data))
+	if got, want := string(ring.data[0:length]), string(content); got != want {
+		t.Fatalf("got %v; want %v", got, want)
+	}
 }
 
 func BenchmarkAtomic(t *testing.B) {
