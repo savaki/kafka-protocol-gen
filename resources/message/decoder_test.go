@@ -631,6 +631,13 @@ func BenchmarkDecoder_PutVarBytes(t *testing.B) {
 	}
 }
 
+func TestStringLength(t *testing.T) {
+	got := len("你好")
+	if want := 6; got != want {
+		t.Fatalf("got %v; want %v", got, want)
+	}
+}
+
 func BenchmarkDecoder_PutVarString(t *testing.B) {
 	buf := bytes.NewBuffer(nil)
 	encoder := NewEncoder(buf)
@@ -712,6 +719,21 @@ func TestDecoder_remain(t *testing.T) {
 	}
 
 	_, err = d.StringArray()
+	if !IsInsufficientDataError(err) {
+		t.Fatalf("got %v; want %v", err, io.ErrShortBuffer)
+	}
+
+	_, err = d.VarBytes()
+	if !IsInsufficientDataError(err) {
+		t.Fatalf("got %v; want %v", err, io.ErrShortBuffer)
+	}
+
+	_, err = d.VarInt()
+	if !IsInsufficientDataError(err) {
+		t.Fatalf("got %v; want %v", err, io.ErrShortBuffer)
+	}
+
+	_, err = d.VarString()
 	if !IsInsufficientDataError(err) {
 		t.Fatalf("got %v; want %v", err, io.ErrShortBuffer)
 	}
